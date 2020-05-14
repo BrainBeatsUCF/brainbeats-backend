@@ -21,7 +21,6 @@ namespace brainbeats_backend.Controllers
     public async Task<IActionResult> CreateUser(dynamic req) {
       var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
 
-      string id = Guid.NewGuid().ToString();
       string firstName = body.firstName;
       string lastName = body.lastName;
       string email = body.email;
@@ -31,15 +30,14 @@ namespace brainbeats_backend.Controllers
       }
 
       string queryString = $"g.addV('user')" +
-        $".property('id', '{id}')" +
+        $".property('id', '{email}')" +
         $".property('firstName', '{firstName}')" +
         $".property('lastName', '{lastName}')" +
-        $".property('email', '{email}')" +
         $".property('type', 'user')";
 
       try {
-        DatabaseConnection.Instance.ExecuteQuery(queryString).Wait();
-        return Ok();
+        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
+        return Ok(result);
       } catch {
         return BadRequest();
       }
@@ -56,9 +54,7 @@ namespace brainbeats_backend.Controllers
         return BadRequest("Malformed Request");
       }
 
-      string queryString = $"g.V()" +
-        ".hasLabel('user')" +
-        $".has('email', '{email}')";
+      string queryString = $"g.V('{email}')";
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
@@ -81,7 +77,7 @@ namespace brainbeats_backend.Controllers
         return BadRequest("Malformed Request");
       }
 
-      string queryString = $"g.V().hasLabel('user').has('email', '{email}')";
+      string queryString = $"g.V('{email}')";
       StringBuilder sb = new StringBuilder(queryString);
 
       if (firstName != null) {
@@ -112,7 +108,7 @@ namespace brainbeats_backend.Controllers
         return BadRequest("Malformed Request");
       }
 
-      string queryString = $"g.V().hasLabel('user').has('email', '{email}').drop()";
+      string queryString = $"g.V('{email}').drop()";
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
