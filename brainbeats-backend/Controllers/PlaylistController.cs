@@ -18,10 +18,22 @@ namespace brainbeats_backend.Controllers
       string playlistId = Guid.NewGuid().ToString();
       string email = body.email;
       string beatId = body.beatId;
+      string name = body.name;
+      string image = body.image;
+      string isPrivate = body.isPrivate;
+      string isDeleted = "false";
+
+      Int32 unixTimestamp = (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+      string modifiedDate = unixTimestamp.ToString();
 
       string queryString1 = "g.addV('playlist')" +
         ".property('type', 'playlist')" +
-        $".property('id', '{playlistId}')";
+        $".property('id', '{playlistId}')" +
+        $".property('name', '{name}')" +
+        $".property('image', '{image}')" +
+        $".property('isPrivate', '{isPrivate}')" +
+        $".property('isDeleted', '{isDeleted}')" +
+        $".property('modifiedDate', '{modifiedDate}')";
 
       StringBuilder sb1 = new StringBuilder(queryString1);
 
@@ -121,6 +133,53 @@ namespace brainbeats_backend.Controllers
     }
 
     [HttpPost]
+    [Route("update")]
+    public async Task<IActionResult> UpdatePlaylist(dynamic req) {
+      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+
+      string playlistId = body.playlistId;
+      string name = body.name;
+      string image = body.image;
+      string isPrivate = body.isPrivate;
+      string isDeleted = body.isDeleted;
+
+      Int32 unixTimestamp = (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+      string modifiedDate = unixTimestamp.ToString();
+
+      if (playlistId == null || (name == null && image == null && isPrivate == null && isDeleted == null)) {
+        return BadRequest("Malformed Request");
+      }
+
+      string queryString = $"g.V('{playlistId}')";
+      StringBuilder sb = new StringBuilder(queryString);
+
+      if (name != null) {
+        sb.Append($".property('name', '{name}')");
+      }
+
+      if (image != null) {
+        sb.Append($".property('image', '{image}')");
+      }
+
+      if (isPrivate != null) {
+        sb.Append($".property('isPrivate', '{isPrivate}')");
+      }
+
+      if (isDeleted != null) {
+        sb.Append($".property('isDeleted', '{isDeleted}')");
+      }
+
+      sb.Append($".property('modifiedDate', '{modifiedDate}')");
+
+      try {
+        var result = await DatabaseConnection.Instance.ExecuteQuery(sb.ToString());
+        return Ok(result);
+      } catch {
+        return BadRequest();
+      }
+    }
+
+    [HttpPost]
     [Route("updateDeleteBeat")]
     public async Task<IActionResult> UpdatePlaylistDeleteBeats(dynamic req) {
       var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
@@ -132,7 +191,11 @@ namespace brainbeats_backend.Controllers
         return BadRequest("Malformed Request");
       }
 
+      Int32 unixTimestamp = (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+      string modifiedDate = unixTimestamp.ToString();
+
       string queryString = $"g.V('{playlistId}')" +
+        $".property('modifiedDate', '{modifiedDate}')" +
         ".out('CONTAINS')" +
         $".where(inV().has('id', '{beatId}'))" +
         ".drop()";
@@ -157,7 +220,11 @@ namespace brainbeats_backend.Controllers
         return BadRequest("Malformed Request");
       }
 
+      Int32 unixTimestamp = (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+      string modifiedDate = unixTimestamp.ToString();
+
       string queryString = $"g.V('{playlistId}')" +
+        $".property('modifiedDate', '{modifiedDate}')" +
         ".addE('CONTAINS')" +
         $".to(g.V('{beatId}))";
 
