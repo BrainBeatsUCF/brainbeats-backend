@@ -196,7 +196,7 @@ namespace brainbeats_backend.Controllers
 
       string queryString = $"g.V('{playlistId}')" +
         $".property('modifiedDate', '{modifiedDate}')" +
-        ".out('CONTAINS')" +
+        ".outE('CONTAINS')" +
         $".where(inV().has('id', '{beatId}'))" +
         ".drop()";
 
@@ -226,7 +226,7 @@ namespace brainbeats_backend.Controllers
       string queryString = $"g.V('{playlistId}')" +
         $".property('modifiedDate', '{modifiedDate}')" +
         ".addE('CONTAINS')" +
-        $".to(g.V('{beatId}))";
+        $".to(g.V('{beatId}'))";
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
