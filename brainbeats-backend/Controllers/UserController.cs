@@ -1,13 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Gremlin.Net.Driver;
-using Gremlin.Net.Structure.IO.GraphSON;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 
 namespace brainbeats_backend.Controllers
@@ -19,7 +13,14 @@ namespace brainbeats_backend.Controllers
     [HttpPost]
     [Route("create")]
     public async Task<IActionResult> CreateUser(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+      string request;
+      if (req.GetType().Equals(typeof(string))) {
+        request = req;
+      } else {
+        request = req.ToString();
+      }
+
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string firstName = body.firstName;
       string lastName = body.lastName;
@@ -34,6 +35,10 @@ namespace brainbeats_backend.Controllers
         $".property('firstName', '{firstName}')" +
         $".property('lastName', '{lastName}')" +
         $".property('type', 'user')";
+
+      if (body.seed != null) {
+        queryString += $".property('seed', '{body.seed}')";
+      }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
