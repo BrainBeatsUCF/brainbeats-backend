@@ -1,17 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Text;
 using System.Threading.Tasks;
-using Gremlin.Net.Driver;
-using Gremlin.Net.Structure.IO.GraphSON;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 
-namespace brainbeats_backend.Controllers
-{
+namespace brainbeats_backend.Controllers {
+  /*
+   * User Schema:
+   * id - string
+   * firstName - string
+   * lastName - string
+   */
+
   [Route("api/[controller]")]
   [ApiController]
   public class UserController : ControllerBase
@@ -87,8 +86,6 @@ namespace brainbeats_backend.Controllers
       if (lastName != null) {
         sb.Append($".property('lastName', '{lastName}')");
       }
-
-      Console.WriteLine(sb.ToString());
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(sb.ToString());

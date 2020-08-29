@@ -1,49 +1,37 @@
-﻿using System;
-using System.Text;
+﻿using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 
 namespace brainbeats_backend.Controllers {
+  /*
+   * Sample Schema:
+   * id - string
+   * name - string
+   * isPrivate - boolean
+   * isDeleted - boolean
+   * sampleNote - ?
+   * type - ?
+   */
+
   [Route("api/[controller]")]
   [ApiController]
-  public class BeatController : ControllerBase
-  {
-    /* Beat Schema:
-     * id - string
-     * duration - double
-     * name - string
-     * image - string
-     * isPrivate - boolean
-     * isDeleted - boolean
-     * instrumentList - array
-     * createdDate - date
-     * modifiedDate - date
-     * composition - ?
-     * genre - ?
-     */
-
+  public class SampleController : ControllerBase {
     [HttpPost]
     [Route("create")]
-    public async Task<IActionResult> CreateBeat(dynamic req) {
+    public async Task<IActionResult> CreateSample(dynamic req) {
       var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
 
-      string beatId = Guid.NewGuid().ToString();
+      string sampleId = body.sampleId;
       string name = body.name;
-      string image = body.image;
 
-      if (body.duration == null || name == null || image == null) {
+      if (sampleId == null || name == null) {
         return BadRequest("Malformed Request");
       }
 
-      string duration = body.duration.ToString();
-
-      string queryString = $"g.addV('beat')" +
-        ".property('type', 'beat')" +
-        $".property('id', '{beatId}')" +
-        $".property('name', '{name}')" +
-        $".property('image', '{image}')" +
-        $".property('duration', '{duration}')";
+      string queryString = $"g.addV('sample')" +
+        $".property('id', '{sampleId}')" +
+        $".property('name', '{name}')";
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
@@ -55,16 +43,16 @@ namespace brainbeats_backend.Controllers {
 
     [HttpPost]
     [Route("read")]
-    public async Task<IActionResult> ReadBeat(dynamic req) {
+    public async Task<IActionResult> ReadSample(dynamic req) {
       var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
 
-      string beatId = body.beatId;
+      string sampleId = body.sampleId;
 
-      if (beatId == null) {
+      if (sampleId == null) {
         return BadRequest("Malformed Request");
       }
 
-      string queryString = $"g.V('{beatId}')";
+      string queryString = $"g.V('{sampleId}')";
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
@@ -76,26 +64,21 @@ namespace brainbeats_backend.Controllers {
 
     [HttpPost]
     [Route("update")]
-    public async Task<IActionResult> UpdateBeat(dynamic req) {
+    public async Task<IActionResult> UpdateSample(dynamic req) {
       var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
 
-      string beatId = body.beatId;
+      string sampleId = body.sampleId;
       string name = body.name;
-      string image = body.image;
 
-      if (beatId == null) {
+      if (sampleId == null) {
         return BadRequest("Malformed Request");
       }
 
-      string queryString = $"g.V('{beatId}')";
+      string queryString = $"g.V('{sampleId}')";
       StringBuilder sb = new StringBuilder(queryString);
 
       if (name != null) {
         sb.Append($".property('name', '{name}')");
-      }
-
-      if (image != null) {
-        sb.Append($".property('image', '{image}')");
       }
 
       try {
@@ -108,16 +91,16 @@ namespace brainbeats_backend.Controllers {
 
     [HttpPost]
     [Route("delete")]
-    public async Task<IActionResult> DeleteBeat(dynamic req) {
+    public async Task<IActionResult> DeleteSample(dynamic req) {
       var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
 
-      string beatId = body.beatId;
+      string sampleId = body.sampleId;
 
-      if (beatId == null) {
+      if (sampleId == null) {
         return BadRequest("Malformed Request");
       }
 
-      string queryString = $"g.V('{beatId}').drop()";
+      string queryString = $"g.V('{sampleId}').drop()";
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
