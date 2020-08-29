@@ -5,34 +5,33 @@ using Newtonsoft.Json;
 
 namespace brainbeats_backend.Controllers {
   /*
-   * User Schema:
+   * Sample Schema:
    * id - string
-   * firstName - string
-   * lastName - string
+   * name - string
+   * isPrivate - boolean
+   * isDeleted - boolean
+   * sampleNote - ?
+   * type - ?
    */
 
   [Route("api/[controller]")]
   [ApiController]
-  public class UserController : ControllerBase
-  {
+  public class SampleController : ControllerBase {
     [HttpPost]
     [Route("create")]
-    public async Task<IActionResult> CreateUser(dynamic req) {
+    public async Task<IActionResult> CreateSample(dynamic req) {
       var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
 
-      string firstName = body.firstName;
-      string lastName = body.lastName;
-      string email = body.email;
+      string sampleId = body.sampleId;
+      string name = body.name;
 
-      if (firstName == null || lastName == null || email == null) {
+      if (sampleId == null || name == null) {
         return BadRequest("Malformed Request");
       }
 
-      string queryString = $"g.addV('user')" +
-        $".property('id', '{email}')" +
-        $".property('firstName', '{firstName}')" +
-        $".property('lastName', '{lastName}')" +
-        $".property('type', 'user')";
+      string queryString = $"g.addV('sample')" +
+        $".property('id', '{sampleId}')" +
+        $".property('name', '{name}')";
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
@@ -44,16 +43,16 @@ namespace brainbeats_backend.Controllers {
 
     [HttpPost]
     [Route("read")]
-    public async Task<IActionResult> ReadUser(dynamic req) {
+    public async Task<IActionResult> ReadSample(dynamic req) {
       var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
 
-      string email = body.email;
+      string sampleId = body.sampleId;
 
-      if (email == null) {
+      if (sampleId == null) {
         return BadRequest("Malformed Request");
       }
 
-      string queryString = $"g.V('{email}')";
+      string queryString = $"g.V('{sampleId}')";
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
@@ -65,26 +64,21 @@ namespace brainbeats_backend.Controllers {
 
     [HttpPost]
     [Route("update")]
-    public async Task<IActionResult> UpdateUser(dynamic req) {
+    public async Task<IActionResult> UpdateSample(dynamic req) {
       var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
 
-      string firstName = body.firstName;
-      string lastName = body.lastName;
-      string email = body.email;
+      string sampleId = body.sampleId;
+      string name = body.name;
 
-      if ((firstName == null && lastName == null) || email == null) {
+      if (sampleId == null) {
         return BadRequest("Malformed Request");
       }
 
-      string queryString = $"g.V('{email}')";
+      string queryString = $"g.V('{sampleId}')";
       StringBuilder sb = new StringBuilder(queryString);
 
-      if (firstName != null) {
-        sb.Append($".property('firstName', '{firstName}')");
-      }
-
-      if (lastName != null) {
-        sb.Append($".property('lastName', '{lastName}')");
+      if (name != null) {
+        sb.Append($".property('name', '{name}')");
       }
 
       try {
@@ -97,15 +91,16 @@ namespace brainbeats_backend.Controllers {
 
     [HttpPost]
     [Route("delete")]
-    public async Task<IActionResult> DeleteUser(dynamic req) {
+    public async Task<IActionResult> DeleteSample(dynamic req) {
       var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
-      string email = body.email;
 
-      if (email == null) {
+      string sampleId = body.sampleId;
+
+      if (sampleId == null) {
         return BadRequest("Malformed Request");
       }
 
-      string queryString = $"g.V('{email}').drop()";
+      string queryString = $"g.V('{sampleId}').drop()";
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
