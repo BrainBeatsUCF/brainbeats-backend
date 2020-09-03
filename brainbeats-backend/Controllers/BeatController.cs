@@ -26,7 +26,14 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("create")]
     public async Task<IActionResult> CreateBeat(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+      string request;
+      if (req.GetType().Equals(typeof(string))) {
+        request = req;
+      } else {
+        request = req.ToString();
+      }
+
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string beatId = Guid.NewGuid().ToString();
       string name = body.name;
@@ -56,7 +63,14 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("read")]
     public async Task<IActionResult> ReadBeat(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+      string request;
+      if (req.GetType().Equals(typeof(string))) {
+        request = req;
+      } else {
+        request = req.ToString();
+      }
+
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string beatId = body.beatId;
 
@@ -77,7 +91,14 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("update")]
     public async Task<IActionResult> UpdateBeat(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+      string request;
+      if (req.GetType().Equals(typeof(string))) {
+        request = req;
+      } else {
+        request = req.ToString();
+      }
+
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string beatId = body.beatId;
       string name = body.name;
@@ -109,7 +130,14 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("delete")]
     public async Task<IActionResult> DeleteBeat(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+      string request;
+      if (req.GetType().Equals(typeof(string))) {
+        request = req;
+      } else {
+        request = req.ToString();
+      }
+
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string beatId = body.beatId;
 

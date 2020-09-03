@@ -20,7 +20,14 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("create")]
     public async Task<IActionResult> CreateSample(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+      string request;
+      if (req.GetType().Equals(typeof(string))) {
+        request = req;
+      } else {
+        request = req.ToString();
+      }
+
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string sampleId = body.sampleId;
       string name = body.name;
@@ -44,7 +51,14 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("read")]
     public async Task<IActionResult> ReadSample(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+      string request;
+      if (req.GetType().Equals(typeof(string))) {
+        request = req;
+      } else {
+        request = req.ToString();
+      }
+
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string sampleId = body.sampleId;
 
@@ -65,7 +79,14 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("update")]
     public async Task<IActionResult> UpdateSample(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+      string request;
+      if (req.GetType().Equals(typeof(string))) {
+        request = req;
+      } else {
+        request = req.ToString();
+      }
+
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string sampleId = body.sampleId;
       string name = body.name;
@@ -92,7 +113,14 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("delete")]
     public async Task<IActionResult> DeleteSample(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+      string request;
+      if (req.GetType().Equals(typeof(string))) {
+        request = req;
+      } else {
+        request = req.ToString();
+      }
+
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string sampleId = body.sampleId;
 

@@ -13,7 +13,14 @@ namespace brainbeats_backend.Controllers
     [HttpPost]
     [Route("create")]
     public async Task<IActionResult> CreatePlaylist(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+      string request;
+      if (req.GetType().Equals(typeof(string))) {
+        request = req;
+      } else {
+        request = req.ToString();
+      }
+
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string playlistId = Guid.NewGuid().ToString();
       string email = body.email;
@@ -72,7 +79,14 @@ namespace brainbeats_backend.Controllers
     [HttpPost]
     [Route("read")]
     public async Task<IActionResult> ReadPlaylist(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+      string request;
+      if (req.GetType().Equals(typeof(string))) {
+        request = req;
+      } else {
+        request = req.ToString();
+      }
+
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string playlistId = body.playlistId;
 
@@ -93,7 +107,14 @@ namespace brainbeats_backend.Controllers
     [HttpPost]
     [Route("readBeats")]
     public async Task<IActionResult> ReadPlaylistBeats(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+      string request;
+      if (req.GetType().Equals(typeof(string))) {
+        request = req;
+      } else {
+        request = req.ToString();
+      }
+
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string playlistId = body.playlistId;
 
@@ -114,7 +135,14 @@ namespace brainbeats_backend.Controllers
     [HttpPost]
     [Route("readOwner")]
     public async Task<IActionResult> ReadPlaylistOwner(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+      string request;
+      if (req.GetType().Equals(typeof(string))) {
+        request = req;
+      } else {
+        request = req.ToString();
+      }
+
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string playlistId = body.playlistId;
 
@@ -135,7 +163,14 @@ namespace brainbeats_backend.Controllers
     [HttpPost]
     [Route("update")]
     public async Task<IActionResult> UpdatePlaylist(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+      string request;
+      if (req.GetType().Equals(typeof(string))) {
+        request = req;
+      } else {
+        request = req.ToString();
+      }
+
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string playlistId = body.playlistId;
       string name = body.name;
@@ -182,7 +217,14 @@ namespace brainbeats_backend.Controllers
     [HttpPost]
     [Route("updateDeleteBeat")]
     public async Task<IActionResult> UpdatePlaylistDeleteBeats(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+      string request;
+      if (req.GetType().Equals(typeof(string))) {
+        request = req;
+      } else {
+        request = req.ToString();
+      }
+
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string playlistId = body.playlistId;
       string beatId = body.beatId;
@@ -211,7 +253,14 @@ namespace brainbeats_backend.Controllers
     [HttpPost]
     [Route("updateAddBeat")]
     public async Task<IActionResult> UpdatePlaylistAddBeats(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+      string request;
+      if (req.GetType().Equals(typeof(string))) {
+        request = req;
+      } else {
+        request = req.ToString();
+      }
+
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string playlistId = body.playlistId;
       string beatId = body.beatId;
@@ -239,7 +288,14 @@ namespace brainbeats_backend.Controllers
     [HttpPost]
     [Route("delete")]
     public async Task<IActionResult> DeletePlaylist(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+      string request;
+      if (req.GetType().Equals(typeof(string))) {
+        request = req;
+      } else {
+        request = req.ToString();
+      }
+
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string playlistId = body.playlistId;
 
