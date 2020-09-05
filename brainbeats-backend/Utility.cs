@@ -1,8 +1,4 @@
-﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System;
 
 namespace brainbeats_backend {
   public static class Utility {
@@ -21,8 +17,8 @@ namespace brainbeats_backend {
         AddProperty("id", vertexId);
     }
 
-    public static string DeleteVertex(string vertexId) {
-      return $"g.V('{vertexId}').drop()";
+    public static string DeleteVertex() {
+      return $".drop()";
     }
 
     public static string GetVertex(string vertexId) {
@@ -30,16 +26,24 @@ namespace brainbeats_backend {
     }
 
     public static string CreateEdge(string edgeType, string dest) {
-      return $".addE('{edgeType}').to(g.V('{dest}'))";
+      return $".addE('{edgeType}').to(g.V('{dest}')).outV()";
+    }
+
+    public static string DeleteEdge(string edgeType, string dest) {
+      return $".outE('{edgeType}').where(inV().has('id', '{dest}')).drop()";
     }
 
     public static string GetNeighbors(string edgeType) {
       return $".out('{edgeType}')";
     }
 
-    public static string AddProperty(string propertyType, string propertyValue) {
+    public static string AddProperty(string propertyType, string propertyValue, bool required = true) {
       if (propertyValue == null) {
-        throw new ArgumentException($"Missing PropertyValue {propertyValue}");
+        if (required) {
+          throw new ArgumentException($"Missing PropertyValue {propertyValue}");
+        } else {
+          return "";
+        }
       }
 
       return $".property('{propertyType}', '{propertyValue}')";

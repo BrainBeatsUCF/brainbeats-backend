@@ -1,6 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Text;
+﻿using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -34,16 +32,15 @@ namespace brainbeats_backend.Controllers {
           AddProperty("attributes", attributes) +
           AddProperty("audio", audio) +
           AddProperty("type", type) +
-          AddProperty("modifiedDate", modifiedDate));
+          AddProperty("modifiedDate", modifiedDate) +
+          CreateEdge("OWNED_BY", email));
       } catch {
         return BadRequest();
       }
 
       if (body.seed != null) {
-        queryString.Append(AddProperty("seed", body.seed));
+        queryString.Append(AddProperty("seed", body.seed, false));
       }
-
-      queryString.Append(CreateEdge("OWNED_BY", email));
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString.ToString());
@@ -56,7 +53,7 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("read")]
     public async Task<IActionResult> ReadSample(dynamic req) {
-      string request = Utility.GetRequest(req);
+      string request = GetRequest(req);
       var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string sampleId = body.sampleId;
@@ -78,7 +75,7 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("update")]
     public async Task<IActionResult> UpdateSample(dynamic req) {
-      string request = Utility.GetRequest(req);
+      string request = GetRequest(req);
       var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string sampleId = body.sampleId;
@@ -102,7 +99,7 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("delete")]
     public async Task<IActionResult> DeleteSample(dynamic req) {
-      string request = Utility.GetRequest(req);
+      string request = GetRequest(req);
       var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string sampleId = body.sampleId;
@@ -111,7 +108,7 @@ namespace brainbeats_backend.Controllers {
         return BadRequest("Malformed Request");
       }
 
-      string queryString = DeleteVertex(sampleId);
+      string queryString = GetVertex(sampleId) + DeleteVertex();
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
