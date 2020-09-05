@@ -18,13 +18,7 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("create")]
     public async Task<IActionResult> CreateUser(dynamic req) {
-      string request;
-      if (req.GetType().Equals(typeof(string))) {
-        request = req;
-      } else {
-        request = req.ToString();
-      }
-
+      string request = Utility.GetRequest(req);
       var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string firstName = body.firstName;
@@ -56,7 +50,8 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("read")]
     public async Task<IActionResult> ReadUser(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+      string request = Utility.GetRequest(req);
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string email = body.email;
 
@@ -77,7 +72,8 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("update")]
     public async Task<IActionResult> UpdateUser(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+      string request = Utility.GetRequest(req);
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string firstName = body.firstName;
       string lastName = body.lastName;
@@ -109,7 +105,9 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("delete")]
     public async Task<IActionResult> DeleteUser(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+      string request = Utility.GetRequest(req);
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
+
       string email = body.email;
 
       if (email == null) {

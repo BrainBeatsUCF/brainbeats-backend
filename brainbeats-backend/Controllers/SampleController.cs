@@ -1,47 +1,52 @@
-﻿using System.Text;
+﻿using System;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using static brainbeats_backend.Utility;
 
 namespace brainbeats_backend.Controllers {
-  /*
-   * Sample Schema:
-   * id - string
-   * name - string
-   * isPrivate - boolean
-   * isDeleted - boolean
-   * sampleNote - ?
-   * type - ?
-   */
-
   [Route("api/[controller]")]
   [ApiController]
   public class SampleController : ControllerBase {
     [HttpPost]
     [Route("create")]
     public async Task<IActionResult> CreateSample(dynamic req) {
-      string request;
-      if (req.GetType().Equals(typeof(string))) {
-        request = req;
-      } else {
-        request = req.ToString();
-      }
-
+      string request = GetRequest(req);
       var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string sampleId = body.sampleId;
       string name = body.name;
+      string email = body.email;
 
-      if (sampleId == null || name == null) {
-        return BadRequest("Malformed Request");
+      string isPrivate = body.isPrivate;
+      string attributes = body.attributes;
+      string audio = body.audio;
+      string type = body.type;
+      string modifiedDate = GetCurrentTime();
+
+      StringBuilder queryString = new StringBuilder();
+      try {
+        queryString.Append(CreateVertex("sample", sampleId) +
+          AddProperty("name", name) +
+          AddProperty("isPrivate", isPrivate) +
+          AddProperty("attributes", attributes) +
+          AddProperty("audio", audio) +
+          AddProperty("type", type) +
+          AddProperty("modifiedDate", modifiedDate));
+      } catch {
+        return BadRequest();
       }
 
-      string queryString = $"g.addV('sample')" +
-        $".property('id', '{sampleId}')" +
-        $".property('name', '{name}')";
+      if (body.seed != null) {
+        queryString.Append(AddProperty("seed", body.seed));
+      }
+
+      queryString.Append(CreateEdge("OWNED_BY", email));
 
       try {
-        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
+        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString.ToString());
         return Ok(result);
       } catch {
         return BadRequest();
@@ -51,13 +56,7 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("read")]
     public async Task<IActionResult> ReadSample(dynamic req) {
-      string request;
-      if (req.GetType().Equals(typeof(string))) {
-        request = req;
-      } else {
-        request = req.ToString();
-      }
-
+      string request = Utility.GetRequest(req);
       var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string sampleId = body.sampleId;
@@ -66,7 +65,7 @@ namespace brainbeats_backend.Controllers {
         return BadRequest("Malformed Request");
       }
 
-      string queryString = $"g.V('{sampleId}')";
+      string queryString = GetVertex(sampleId);
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
@@ -79,13 +78,7 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("update")]
     public async Task<IActionResult> UpdateSample(dynamic req) {
-      string request;
-      if (req.GetType().Equals(typeof(string))) {
-        request = req;
-      } else {
-        request = req.ToString();
-      }
-
+      string request = Utility.GetRequest(req);
       var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string sampleId = body.sampleId;
@@ -95,15 +88,11 @@ namespace brainbeats_backend.Controllers {
         return BadRequest("Malformed Request");
       }
 
-      string queryString = $"g.V('{sampleId}')";
-      StringBuilder sb = new StringBuilder(queryString);
-
-      if (name != null) {
-        sb.Append($".property('name', '{name}')");
-      }
+      string queryString = GetVertex(sampleId) +
+        AddProperty("name", name);
 
       try {
-        var result = await DatabaseConnection.Instance.ExecuteQuery(sb.ToString());
+        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
       } catch {
         return BadRequest();
@@ -113,13 +102,7 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("delete")]
     public async Task<IActionResult> DeleteSample(dynamic req) {
-      string request;
-      if (req.GetType().Equals(typeof(string))) {
-        request = req;
-      } else {
-        request = req.ToString();
-      }
-
+      string request = Utility.GetRequest(req);
       var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string sampleId = body.sampleId;
@@ -128,7 +111,7 @@ namespace brainbeats_backend.Controllers {
         return BadRequest("Malformed Request");
       }
 
-      string queryString = $"g.V('{sampleId}').drop()";
+      string queryString = DeleteVertex(sampleId);
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);

@@ -31,8 +31,24 @@ namespace brainbeats_backend.Controllers
           new JProperty("email", $"test_email_{seed}@email.com"),
           new JProperty("seed", seed));
 
+      JObject sampleObject0 =
+        new JObject(
+          new JProperty("sampleId", "test_sample_id_0"),
+          new JProperty("name", "test_sample_name_0"),
+          new JProperty("email", $"test_email_{seed}@email.com"),
+          new JProperty("seed", seed));
+
+      JObject sampleObject1 =
+        new JObject(
+          new JProperty("sampleId", "test_sample_id_1"),
+          new JProperty("name", "test_sample_name_1"),
+          new JProperty("email", $"test_email_{seed}@email.com"),
+          new JProperty("seed", seed));
+
       try {
         await new UserController().CreateUser(userObject.ToString());
+        await new SampleController().CreateSample(sampleObject0.ToString());
+        await new SampleController().CreateSample(sampleObject1.ToString());
         return Ok();
       } catch {
         return BadRequest();
