@@ -17,7 +17,7 @@ namespace brainbeats_backend {
         AddProperty("id", vertexId);
     }
 
-    public static string DeleteVertex() {
+    public static string Delete() {
       return $".drop()";
     }
 
@@ -29,8 +29,8 @@ namespace brainbeats_backend {
       return $".addE('{edgeType}').to(g.V('{dest}')).outV()";
     }
 
-    public static string DeleteEdge(string edgeType, string dest) {
-      return $".outE('{edgeType}').where(inV().has('id', '{dest}')).drop()";
+    public static string GetEdge(string edgeType, string dest) {
+      return $".outE('{edgeType}').where(inV().has('id', '{dest}'))";
     }
 
     public static string GetNeighbors(string edgeType) {

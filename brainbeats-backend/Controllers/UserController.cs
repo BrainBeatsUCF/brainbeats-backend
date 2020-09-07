@@ -104,7 +104,7 @@ namespace brainbeats_backend.Controllers {
         return BadRequest("Malformed Request");
       }
 
-      string queryString = GetVertex(email) + DeleteVertex();
+      string queryString = GetVertex(email) + Delete();
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);

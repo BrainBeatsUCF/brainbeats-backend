@@ -139,7 +139,9 @@ namespace brainbeats_backend.Controllers {
         return BadRequest("Malformed Request");
       }
 
-      string queryString = GetVertex(email) + CreateEdge("LIKES", beatId);
+      string queryString = GetVertex(email) + 
+        CreateEdge("LIKES", beatId) +
+        GetNeighbors(;
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
@@ -161,7 +163,7 @@ namespace brainbeats_backend.Controllers {
         return BadRequest("Malformed Request");
       }
 
-      string queryString = GetVertex(beatId) + DeleteVertex();
+      string queryString = GetVertex(beatId) + Delete();
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
