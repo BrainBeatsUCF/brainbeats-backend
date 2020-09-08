@@ -31,6 +31,7 @@ namespace brainbeats_backend.Controllers {
       string seed = body.seed;
 
       StringBuilder queryString = new StringBuilder();
+
       try {
         queryString.Append(CreateVertex("beat", beatId) +
           AddProperty("name", name) +

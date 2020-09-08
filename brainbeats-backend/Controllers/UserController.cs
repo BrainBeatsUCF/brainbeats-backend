@@ -31,7 +31,7 @@ namespace brainbeats_backend.Controllers {
         return BadRequest("Malformed Request");
       }
 
-      if (seed != null) {        
+      if (seed != null) {
         queryString.Append(AddProperty("seed", seed, false));
       }
 

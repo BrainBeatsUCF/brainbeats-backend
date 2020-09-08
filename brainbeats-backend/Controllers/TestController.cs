@@ -44,7 +44,7 @@ namespace brainbeats_backend.Controllers
           new JProperty("email", $"test_email_1_{seed}@email.com"),
           new JProperty("seed", seed));
 
-      // User owns this sample
+      // User 1 owns this sample
       JObject sampleObject1a =
         new JObject(
           new JProperty("name", "test_sample_name_1"),
@@ -54,7 +54,7 @@ namespace brainbeats_backend.Controllers
           new JProperty("audio", "test_sample_audio_1"),
           new JProperty("seed", seed));
 
-      // User owns this sample
+      // User 1 owns this sample
       JObject sampleObject1b =
         new JObject(
           new JProperty("name", "test_sample_name_2"),
@@ -64,6 +64,7 @@ namespace brainbeats_backend.Controllers
           new JProperty("audio", "test_sample_audio_2"),
           new JProperty("seed", seed));
 
+      // User 1 owns this beat
       JObject beatObject1a =
         new JObject(
           new JProperty("name", "test_beat_name_1"),
@@ -76,6 +77,7 @@ namespace brainbeats_backend.Controllers
           new JProperty("audio", "test_beat_audio_1"),
           new JProperty("seed", seed));
 
+      // User 1 owns this beat
       JObject beatObject1b =
         new JObject(
           new JProperty("name", "test_beat_name_2"),
@@ -106,11 +108,13 @@ namespace brainbeats_backend.Controllers
         return BadRequest("Error creating base vertices and edges");
       }
 
+      // User 1 likes this beat
       JObject likeBeatObject1a =
         new JObject(
           new JProperty("beatId", beatId1a),
           new JProperty("email", $"test_email_1_{seed}@email.com"));
 
+      // User 1 owns this playlist consisting of the prior created beat
       JObject playlistObject1a =
         new JObject(
           new JProperty("name", "test_playlist_name_1"),

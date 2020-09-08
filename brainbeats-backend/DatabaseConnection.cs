@@ -32,7 +32,6 @@ namespace brainbeats_backend {
     }
 
     public Task<ResultSet<dynamic>> ExecuteQuery(string query) {
-
       Console.WriteLine("Executing Query: " + query);
 
       try {
