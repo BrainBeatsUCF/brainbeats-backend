@@ -28,6 +28,7 @@ namespace brainbeats_backend.Controllers {
       string modifiedDate = GetCurrentTime();
       string attributes = body.attributes;
       string audio = body.audio;
+      string seed = body.seed;
 
       StringBuilder queryString = new StringBuilder();
       try {
@@ -46,8 +47,8 @@ namespace brainbeats_backend.Controllers {
         return BadRequest("Malformed Request");
       }
 
-      if (body.seed != null) {
-        queryString.Append(AddProperty("seed", body.seed, false));
+      if (seed != null) {
+        queryString.Append(AddProperty("seed", seed, false));
       }
 
       try {
@@ -139,9 +140,33 @@ namespace brainbeats_backend.Controllers {
         return BadRequest("Malformed Request");
       }
 
-      string queryString = GetVertex(email) + 
-        CreateEdge("LIKES", beatId) +
-        GetNeighbors(;
+      string queryString = GetVertex(email) +
+        CreateEdge("LIKES", beatId);
+
+      try {
+        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
+        return Ok(result);
+      } catch {
+        return BadRequest();
+      }
+    }
+
+    [HttpPost]
+    [Route("unlike_beat")]
+    public async Task<IActionResult> UnlikeBeat(dynamic req) {
+      string request = GetRequest(req);
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
+
+      string beatId = body.beatId;
+      string email = body.email;
+
+      if (beatId == null || email == null) {
+        return BadRequest("Malformed Request");
+      }
+
+      string queryString = GetVertex(email) +
+        GetEdge("LIKES", beatId) +
+        Delete();
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);

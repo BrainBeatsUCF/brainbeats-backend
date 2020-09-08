@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -18,6 +19,7 @@ namespace brainbeats_backend.Controllers {
       string firstName = body.firstName;
       string lastName = body.lastName;
       string email = body.email;
+      string seed = body.seed;
 
       StringBuilder queryString = new StringBuilder();
 
@@ -29,8 +31,8 @@ namespace brainbeats_backend.Controllers {
         return BadRequest("Malformed Request");
       }
 
-      if (body.seed != null) {
-        queryString.Append(AddProperty("seed", body.seed, false));
+      if (seed != null) {        
+        queryString.Append(AddProperty("seed", seed, false));
       }
 
       try {

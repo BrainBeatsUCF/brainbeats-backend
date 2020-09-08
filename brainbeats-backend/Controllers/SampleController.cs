@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -14,15 +15,15 @@ namespace brainbeats_backend.Controllers {
       string request = GetRequest(req);
       var body = JsonConvert.DeserializeObject<dynamic>(request);
 
-      string sampleId = body.sampleId;
+      string sampleId = Guid.NewGuid().ToString();
       string name = body.name;
       string email = body.email;
 
       string isPrivate = body.isPrivate;
       string attributes = body.attributes;
       string audio = body.audio;
-      string type = body.type;
       string modifiedDate = GetCurrentTime();
+      string seed = body.seed;
 
       StringBuilder queryString = new StringBuilder();
       try {
@@ -31,19 +32,19 @@ namespace brainbeats_backend.Controllers {
           AddProperty("isPrivate", isPrivate) +
           AddProperty("attributes", attributes) +
           AddProperty("audio", audio) +
-          AddProperty("type", type) +
           AddProperty("modifiedDate", modifiedDate) +
           CreateEdge("OWNED_BY", email));
       } catch {
         return BadRequest();
       }
 
-      if (body.seed != null) {
-        queryString.Append(AddProperty("seed", body.seed, false));
+      if (seed != null) {
+        queryString.Append(AddProperty("seed", seed, false));
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString.ToString());
+
         return Ok(result);
       } catch {
         return BadRequest();

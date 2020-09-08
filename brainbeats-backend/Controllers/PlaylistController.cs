@@ -26,6 +26,7 @@ namespace brainbeats_backend.Controllers
       string isPrivate = body.isPrivate;
       string createdDate = GetCurrentTime();
       string modifiedDate = GetCurrentTime();
+      string seed = body.seed;
 
       StringBuilder queryString = new StringBuilder();
 
@@ -45,8 +46,8 @@ namespace brainbeats_backend.Controllers
         return BadRequest("Malformed Request");
       }
 
-      if (body.seed != null) {
-        queryString.Append(AddProperty("seed", body.seed, false));
+      if (seed != null) {
+        queryString.Append(AddProperty("seed", seed, false));
       }
 
       try {
@@ -173,7 +174,8 @@ namespace brainbeats_backend.Controllers
 
       string queryString = GetVertex(playlistId) +
         AddProperty("modifiedDate", modifiedDate) +
-        DeleteEdge("CONTAINS", beatId);
+        GetEdge("CONTAINS", beatId) +
+        Delete();
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);

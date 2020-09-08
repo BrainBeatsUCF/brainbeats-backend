@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using static brainbeats_backend.Utility;
 
 namespace brainbeats_backend.Controllers
 {
@@ -16,7 +16,8 @@ namespace brainbeats_backend.Controllers
     [HttpPost]
     [Route("create")]
     public async Task<IActionResult> CreateSeed(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+      string request = GetRequest(req);
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string seed = body.seed;
 
@@ -24,41 +25,116 @@ namespace brainbeats_backend.Controllers
         return BadRequest("Malformed Request");
       }
 
-      JObject userObject =
+      // Delete the current seed if it exists
+      JObject deleteSeedObject =
         new JObject(
-          new JProperty("firstName", $"test_first_name_{seed}"),
-          new JProperty("lastName", $"test_last_name_{seed}"),
-          new JProperty("email", $"test_email_{seed}@email.com"),
-          new JProperty("seed", seed));
-
-      JObject sampleObject0 =
-        new JObject(
-          new JProperty("sampleId", "test_sample_id_0"),
-          new JProperty("name", "test_sample_name_0"),
-          new JProperty("email", $"test_email_{seed}@email.com"),
-          new JProperty("seed", seed));
-
-      JObject sampleObject1 =
-        new JObject(
-          new JProperty("sampleId", "test_sample_id_1"),
-          new JProperty("name", "test_sample_name_1"),
-          new JProperty("email", $"test_email_{seed}@email.com"),
           new JProperty("seed", seed));
 
       try {
-        await new UserController().CreateUser(userObject.ToString());
-        await new SampleController().CreateSample(sampleObject0.ToString());
-        await new SampleController().CreateSample(sampleObject1.ToString());
+        await DeleteSeed(deleteSeedObject.ToString());
+      } catch {
+        return BadRequest("Error deleting prior seed");
+      }
+
+      // User 1
+      JObject userObject1 =
+        new JObject(
+          new JProperty("firstName", $"test_first_name_{seed}"),
+          new JProperty("lastName", $"test_last_name_{seed}"),
+          new JProperty("email", $"test_email_1_{seed}@email.com"),
+          new JProperty("seed", seed));
+
+      // User owns this sample
+      JObject sampleObject1a =
+        new JObject(
+          new JProperty("name", "test_sample_name_1"),
+          new JProperty("email", $"test_email_1_{seed}@email.com"),
+          new JProperty("isPrivate", "false"),
+          new JProperty("attributes", "test_sample_attributes_1"),
+          new JProperty("audio", "test_sample_audio_1"),
+          new JProperty("seed", seed));
+
+      // User owns this sample
+      JObject sampleObject1b =
+        new JObject(
+          new JProperty("name", "test_sample_name_2"),
+          new JProperty("email", $"test_email_1_{seed}@email.com"),
+          new JProperty("isPrivate", "false"),
+          new JProperty("attributes", "test_sample_attributes_2"),
+          new JProperty("audio", "test_sample_audio_2"),
+          new JProperty("seed", seed));
+
+      JObject beatObject1a =
+        new JObject(
+          new JProperty("name", "test_beat_name_1"),
+          new JProperty("email", $"test_email_1_{seed}@email.com"),
+          new JProperty("isPrivate", "false"),
+          new JProperty("duration", "test_beat_duration_1"),
+          new JProperty("image", "test_beat_duration_1"),
+          new JProperty("instrumentList", "test_beat_instrument_list_1"),
+          new JProperty("attributes", "test_beat_attributes_1"),
+          new JProperty("audio", "test_beat_audio_1"),
+          new JProperty("seed", seed));
+
+      JObject beatObject1b =
+        new JObject(
+          new JProperty("name", "test_beat_name_2"),
+          new JProperty("email", $"test_email_1_{seed}@email.com"),
+          new JProperty("isPrivate", "false"),
+          new JProperty("duration", "test_beat_duration_2"),
+          new JProperty("image", "test_beat_duration_2"),
+          new JProperty("instrumentList", "test_beat_instrument_list_2"),
+          new JProperty("attributes", "test_beat_attributes_2"),
+          new JProperty("audio", "test_beat_audio_2"),
+          new JProperty("seed", seed));
+
+      string beatId1a;
+
+      try {
+        await new UserController().CreateUser(userObject1.ToString());
+        await new SampleController().CreateSample(sampleObject1a.ToString());
+        await new SampleController().CreateSample(sampleObject1b.ToString());
+
+        IActionResult resSet = await new BeatController().CreateBeat(beatObject1a.ToString());
+        OkObjectResult okResult = resSet as OkObjectResult;
+
+        IEnumerable<dynamic> resEnum = okResult.Value as IEnumerable<dynamic>;
+        beatId1a = resEnum.First()["id"];
+
+        await new BeatController().CreateBeat(beatObject1b.ToString());
+      } catch {
+        return BadRequest("Error creating base vertices and edges");
+      }
+
+      JObject likeBeatObject1a =
+        new JObject(
+          new JProperty("beatId", beatId1a),
+          new JProperty("email", $"test_email_1_{seed}@email.com"));
+
+      JObject playlistObject1a =
+        new JObject(
+          new JProperty("name", "test_playlist_name_1"),
+          new JProperty("email", $"test_email_1_{seed}@email.com"),
+          new JProperty("isPrivate", "false"),
+          new JProperty("image", "test_playlist_image_1"),
+          new JProperty("beatId", beatId1a),
+          new JProperty("seed", seed));
+
+      try {
+        await new BeatController().LikeBeat(likeBeatObject1a.ToString());
+        await new PlaylistController().CreatePlaylist(playlistObject1a.ToString());
+
         return Ok();
       } catch {
-        return BadRequest();
+        return BadRequest("Error creating extra vertices and edges");
       }
     }
 
     [HttpPost]
     [Route("delete")]
     public async Task<IActionResult> DeleteSeed(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+      string request = GetRequest(req);
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string seed = body.seed;
 

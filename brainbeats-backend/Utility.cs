@@ -17,6 +17,9 @@ namespace brainbeats_backend {
         AddProperty("id", vertexId);
     }
 
+    // g.V().hasLabel('beat').has("name", "test_beat_name_1").values('id')
+    // g.V('test_email_1_56789@email.com').addE('LIKES').to(g.V().hasLabel('beat').has("name", "test_beat_name_1").values('id')).outV()
+
     public static string Delete() {
       return $".drop()";
     }
@@ -26,7 +29,7 @@ namespace brainbeats_backend {
     }
 
     public static string CreateEdge(string edgeType, string dest) {
-      return $".addE('{edgeType}').to(g.V('{dest}')).outV()";
+      return $".addE('{edgeType}').to(g.V('{dest}'))" + AddProperty("date", GetCurrentTime()) + ".outV()";
     }
 
     public static string GetEdge(string edgeType, string dest) {
