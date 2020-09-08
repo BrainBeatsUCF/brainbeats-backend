@@ -40,14 +40,14 @@ namespace brainbeats_backend.Controllers
           CreateEdge("OWNED_BY", email));
 
         if (beatId != null) {
-          queryString.Append(CreateEdge("CONTAINS", beatId));
+          queryString.Append(EdgeSourceReference() + CreateEdge("CONTAINS", beatId));
         }
       } catch {
         return BadRequest("Malformed Request");
       }
 
       if (seed != null) {
-        queryString.Append(AddProperty("seed", seed, false));
+        queryString.Append(EdgeSourceReference() + AddProperty("seed", seed, false));
       }
 
       try {
@@ -93,28 +93,6 @@ namespace brainbeats_backend.Controllers
       }
 
       string queryString = GetVertex(playlistId) + GetNeighbors("CONTAINS");
-
-      try {
-        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
-        return Ok(result);
-      } catch {
-        return BadRequest();
-      }
-    }
-
-    [HttpPost]
-    [Route("read_playlist_owner")]
-    public async Task<IActionResult> ReadPlaylistOwner(dynamic req) {
-      string request = GetRequest(req);
-      var body = JsonConvert.DeserializeObject<dynamic>(request);
-
-      string playlistId = body.playlistId;
-
-      if (playlistId == null) {
-        return BadRequest("Malformed Request");
-      }
-
-      string queryString = GetVertex(playlistId) + GetNeighbors("OWNED_BY");
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);

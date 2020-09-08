@@ -29,7 +29,11 @@ namespace brainbeats_backend {
     }
 
     public static string CreateEdge(string edgeType, string dest) {
-      return $".addE('{edgeType}').to(g.V('{dest}'))" + AddProperty("date", GetCurrentTime()) + ".outV()";
+      return $".addE('{edgeType}').to(g.V('{dest}'))" + AddProperty("date", GetCurrentTime());
+    }
+
+    public static string EdgeSourceReference() {
+      return ".outV()";
     }
 
     public static string GetEdge(string edgeType, string dest) {

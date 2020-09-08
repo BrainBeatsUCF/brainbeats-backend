@@ -48,7 +48,7 @@ namespace brainbeats_backend.Controllers {
       }
 
       if (seed != null) {
-        queryString.Append(AddProperty("seed", seed, false));
+        queryString.Append(EdgeSourceReference() + AddProperty("seed", seed, false));
       }
 
       try {
