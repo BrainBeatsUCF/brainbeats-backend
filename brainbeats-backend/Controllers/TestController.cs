@@ -31,7 +31,7 @@ namespace brainbeats_backend.Controllers
           new JProperty("seed", seed));
 
       try {
-        await DeleteSeed(deleteSeedObject.ToString());
+        await DeleteSeed(deleteSeedObject.ToString()).ConfigureAwait(false);
       } catch {
         return BadRequest("Error deleting prior seed");
       }

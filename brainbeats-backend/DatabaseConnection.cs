@@ -32,7 +32,7 @@ namespace brainbeats_backend {
     }
 
     public Task<ResultSet<dynamic>> ExecuteQuery(string query) {
-      Console.WriteLine("Executing Query: " + query);
+      // Console.WriteLine("Executing Query: " + query);
 
       try {
         return gremlinClient.SubmitAsync<dynamic>(query);

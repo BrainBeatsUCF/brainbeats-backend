@@ -51,8 +51,12 @@ namespace brainbeats_backend {
       return $".out('{edgeType}')";
     }
 
+    public static string AddProperty(string propertyType, string propertyValue) {
+      return AddProperty(propertyType, propertyValue, true);
+    }
+
     // Adds a new property to the specified vertex or edge
-    public static string AddProperty(string propertyType, string propertyValue, bool required = true) {
+    public static string AddProperty(string propertyType, string propertyValue, bool required) {
       // If the property value is null and required, throw an argument exception
       if (propertyValue == null) {
         if (required) {
