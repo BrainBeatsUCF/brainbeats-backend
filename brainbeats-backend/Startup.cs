@@ -32,7 +32,7 @@ namespace brainbeats_backend {
         app.UseDeveloperExceptionPage();
       }
 
-      app.UseHttpsRedirection();
+      // app.UseHttpsRedirection();
 
       app.UseRouting();
 
