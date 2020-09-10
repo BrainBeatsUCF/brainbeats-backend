@@ -3,6 +3,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using static brainbeats_backend.Utility;
 
 namespace brainbeats_backend.Controllers
 {
@@ -11,58 +12,46 @@ namespace brainbeats_backend.Controllers
   public class PlaylistController : ControllerBase
   {
     [HttpPost]
-    [Route("create")]
+    [Route("create_playlist")]
     public async Task<IActionResult> CreatePlaylist(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+      string request = GetRequest(req);
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string playlistId = Guid.NewGuid().ToString();
       string email = body.email;
       string beatId = body.beatId;
+
       string name = body.name;
       string image = body.image;
       string isPrivate = body.isPrivate;
-      string isDeleted = "false";
+      string createdDate = GetCurrentTime();
+      string modifiedDate = GetCurrentTime();
+      string seed = body.seed;
 
-      Int32 unixTimestamp = (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
-      string modifiedDate = unixTimestamp.ToString();
+      StringBuilder queryString = new StringBuilder();
 
-      string queryString1 = "g.addV('playlist')" +
-        ".property('type', 'playlist')" +
-        $".property('id', '{playlistId}')" +
-        $".property('name', '{name}')" +
-        $".property('image', '{image}')" +
-        $".property('isPrivate', '{isPrivate}')" +
-        $".property('isDeleted', '{isDeleted}')" +
-        $".property('modifiedDate', '{modifiedDate}')";
+      try {
+        queryString.Append(CreateVertex("playlist", playlistId) +
+          AddProperty("name", name) +
+          AddProperty("image", image) +
+          AddProperty("isPrivate", isPrivate) +
+          AddProperty("createdDate", createdDate) +
+          AddProperty("modifiedDate", modifiedDate) +
+          CreateEdge("OWNED_BY", email));
 
-      StringBuilder sb1 = new StringBuilder(queryString1);
+        if (beatId != null) {
+          queryString.Append(EdgeSourceReference() + CreateEdge("CONTAINS", beatId));
+        }
+      } catch {
+        return BadRequest("Malformed Request");
+      }
 
-      // If an initial beatId is specified, add it onto our playlist,
-      // otherwise, create an empty playlist
-      if (beatId != null) {
-        string addEdge = $".addE('CONTAINS')" +
-          $".to(g.V('{beatId}'))";
-
-        sb1.Append(addEdge);
+      if (seed != null) {
+        queryString.Append(EdgeSourceReference() + AddProperty("seed", seed, false));
       }
 
       try {
-        var result = await DatabaseConnection.Instance.ExecuteQuery(sb1.ToString());
-
-        // Add edge from user to playlist with type 'OWNER_OF'
-        string queryString2 = $"g.V('{email}')" +
-          ".addE('OWNER_OF')" +
-          $".to(g.V('{playlistId}'))";
-
-        await DatabaseConnection.Instance.ExecuteQuery(queryString2);
-
-        // Add edge from playlist to user with type 'OWNED_BY'
-        string queryString3 = $"g.V('{playlistId}')" +
-          ".addE('OWNED_BY')" +
-          $".to(g.V('{email}'))";
-
-        await DatabaseConnection.Instance.ExecuteQuery(queryString3);
-
+        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString.ToString());
         return Ok(result);
       } catch {
         return BadRequest();
@@ -70,9 +59,10 @@ namespace brainbeats_backend.Controllers
     }
 
     [HttpPost]
-    [Route("read")]
+    [Route("read_playlist")]
     public async Task<IActionResult> ReadPlaylist(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+      string request = GetRequest(req);
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string playlistId = body.playlistId;
 
@@ -80,7 +70,7 @@ namespace brainbeats_backend.Controllers
         return BadRequest("Malformed Request");
       }
 
-      string queryString = $"g.V('{playlistId}')";
+      string queryString = GetVertex(playlistId);
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
@@ -91,9 +81,10 @@ namespace brainbeats_backend.Controllers
     }
 
     [HttpPost]
-    [Route("readBeats")]
+    [Route("read_playlist_beats")]
     public async Task<IActionResult> ReadPlaylistBeats(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+      string request = GetRequest(req);
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string playlistId = body.playlistId;
 
@@ -101,7 +92,7 @@ namespace brainbeats_backend.Controllers
         return BadRequest("Malformed Request");
       }
 
-      string queryString = $"g.V('{playlistId}').out('CONTAINS')";
+      string queryString = GetVertex(playlistId) + GetNeighbors("CONTAINS");
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
@@ -112,67 +103,33 @@ namespace brainbeats_backend.Controllers
     }
 
     [HttpPost]
-    [Route("readOwner")]
-    public async Task<IActionResult> ReadPlaylistOwner(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
-
-      string playlistId = body.playlistId;
-
-      if (playlistId == null) {
-        return BadRequest("Malformed Request");
-      }
-
-      string queryString = $"g.V('{playlistId}').out('OWNED_BY')";
-
-      try {
-        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
-        return Ok(result);
-      } catch {
-        return BadRequest();
-      }
-    }
-
-    [HttpPost]
-    [Route("update")]
+    [Route("update_playlist")]
     public async Task<IActionResult> UpdatePlaylist(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+      string request = GetRequest(req);
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string playlistId = body.playlistId;
+
       string name = body.name;
       string image = body.image;
       string isPrivate = body.isPrivate;
-      string isDeleted = body.isDeleted;
+      string modifiedDate = GetCurrentTime();
 
-      Int32 unixTimestamp = (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
-      string modifiedDate = unixTimestamp.ToString();
+      StringBuilder queryString = new StringBuilder();
+      bool required = false;
 
-      if (playlistId == null || (name == null && image == null && isPrivate == null && isDeleted == null)) {
+      try {
+        queryString.Append(GetVertex(playlistId) +
+          AddProperty("name", name, required) +
+          AddProperty("image", image, required) +
+          AddProperty("isPrivate", isPrivate, required) +
+          AddProperty("modifiedDate", modifiedDate));
+      } catch {
         return BadRequest("Malformed Request");
       }
 
-      string queryString = $"g.V('{playlistId}')";
-      StringBuilder sb = new StringBuilder(queryString);
-
-      if (name != null) {
-        sb.Append($".property('name', '{name}')");
-      }
-
-      if (image != null) {
-        sb.Append($".property('image', '{image}')");
-      }
-
-      if (isPrivate != null) {
-        sb.Append($".property('isPrivate', '{isPrivate}')");
-      }
-
-      if (isDeleted != null) {
-        sb.Append($".property('isDeleted', '{isDeleted}')");
-      }
-
-      sb.Append($".property('modifiedDate', '{modifiedDate}')");
-
       try {
-        var result = await DatabaseConnection.Instance.ExecuteQuery(sb.ToString());
+        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString.ToString());
         return Ok(result);
       } catch {
         return BadRequest();
@@ -180,25 +137,23 @@ namespace brainbeats_backend.Controllers
     }
 
     [HttpPost]
-    [Route("updateDeleteBeat")]
-    public async Task<IActionResult> UpdatePlaylistDeleteBeats(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+    [Route("update_playlist_delete_beat")]
+    public async Task<IActionResult> UpdatePlaylistDeleteBeat(dynamic req) {
+      string request = GetRequest(req);
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string playlistId = body.playlistId;
       string beatId = body.beatId;
+      string modifiedDate = GetCurrentTime();
 
       if (playlistId == null || beatId == null) {
         return BadRequest("Malformed Request");
       }
 
-      Int32 unixTimestamp = (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
-      string modifiedDate = unixTimestamp.ToString();
-
-      string queryString = $"g.V('{playlistId}')" +
-        $".property('modifiedDate', '{modifiedDate}')" +
-        ".outE('CONTAINS')" +
-        $".where(inV().has('id', '{beatId}'))" +
-        ".drop()";
+      string queryString = GetVertex(playlistId) +
+        AddProperty("modifiedDate", modifiedDate) +
+        GetEdge("CONTAINS", beatId) +
+        Delete();
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
@@ -209,24 +164,22 @@ namespace brainbeats_backend.Controllers
     }
 
     [HttpPost]
-    [Route("updateAddBeat")]
-    public async Task<IActionResult> UpdatePlaylistAddBeats(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+    [Route("update_playlist_add_beat")]
+    public async Task<IActionResult> UpdatePlaylistAddBeat(dynamic req) {
+      string request = GetRequest(req);
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string playlistId = body.playlistId;
       string beatId = body.beatId;
+      string modifiedDate = GetCurrentTime();
 
       if (playlistId == null || beatId == null) {
         return BadRequest("Malformed Request");
       }
 
-      Int32 unixTimestamp = (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
-      string modifiedDate = unixTimestamp.ToString();
-
-      string queryString = $"g.V('{playlistId}')" +
-        $".property('modifiedDate', '{modifiedDate}')" +
-        ".addE('CONTAINS')" +
-        $".to(g.V('{beatId}'))";
+      string queryString = GetVertex(playlistId) +
+        AddProperty("modifiedDate", modifiedDate) +
+        CreateEdge("CONTAINS", beatId);
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
@@ -237,9 +190,10 @@ namespace brainbeats_backend.Controllers
     }
 
     [HttpPost]
-    [Route("delete")]
+    [Route("delete_playlist")]
     public async Task<IActionResult> DeletePlaylist(dynamic req) {
-      var body = JsonConvert.DeserializeObject<dynamic>(req.ToString());
+      string request = GetRequest(req);
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
 
       string playlistId = body.playlistId;
 
@@ -247,7 +201,7 @@ namespace brainbeats_backend.Controllers
         return BadRequest("Malformed Request");
       }
 
-      string queryString = $"g.V('{playlistId}').drop()";
+      string queryString = GetVertex(playlistId) + Delete();
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
