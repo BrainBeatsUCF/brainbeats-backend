@@ -28,12 +28,12 @@ namespace brainbeats_backend {
                                         username: "/dbs/" + database + "/colls/" + container,
                                         password: PrimaryKey);
 
-      gremlinClient = new GremlinClient(gremlinServer, new GraphSON2Reader(), new GraphSON2Writer(), GremlinClient.GraphSON2MimeType);
+      gremlinClient = new GremlinClient(gremlinServer, new GraphSON2Reader(), new GraphSON2Writer(), "application/json");
     }
 
     public Task<ResultSet<dynamic>> ExecuteQuery(string query) {
       try {
-        return gremlinClient.SubmitAsync<dynamic>(query);
+          return gremlinClient.SubmitAsync<dynamic>(query);
       } catch (ResponseException e) {
         Console.WriteLine("\tRequest Error!");
 
