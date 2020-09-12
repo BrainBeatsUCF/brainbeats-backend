@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using static brainbeats_backend.Utility;
+using static brainbeats_backend.QueryBuilder;
 
 namespace brainbeats_backend.Controllers
 {
@@ -92,11 +93,46 @@ namespace brainbeats_backend.Controllers
         return BadRequest("Malformed Request");
       }
 
-      string queryString = GetVertex(playlistId) + GetNeighbors("CONTAINS");
+      string queryString = GetVertex(playlistId) + GetOutNeighbors("CONTAINS");
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
+      } catch {
+        return BadRequest();
+      }
+    }
+
+    [HttpPost]
+    [Route("get_all_playlists")]
+    public async Task<IActionResult> GetAllPlaylists(dynamic req) {
+      string request = GetRequest(req);
+      var body = JsonConvert.DeserializeObject<dynamic>(request);
+
+      string email = body.email;
+
+      if (email == null) {
+        return BadRequest("Malformed Request");
+      }
+
+      string queryStringPublic = GetAllVertices("playlist") + HasProperty("isPrivate", "false");
+      string queryStringPrivate = GetVertex(email) + GetInNeighbors("OWNED_BY") + EdgeSourceReference() + HasLabel("playlist") + HasProperty("isPrivate", "true");
+
+      try {
+        var resultsPublic = await DatabaseConnection.Instance.ExecuteQuery(queryStringPublic);
+        var resultsPrivate = await DatabaseConnection.Instance.ExecuteQuery(queryStringPrivate);
+
+        List<dynamic> resultList = new List<dynamic>();
+
+        foreach (var item in resultsPublic) {
+          resultList.Add(item);
+        }
+
+        foreach (var item in resultsPrivate) {
+          resultList.Add(item);
+        }
+
+        return Ok(resultList);
       } catch {
         return BadRequest();
       }

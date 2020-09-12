@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using static brainbeats_backend.Utility;
+using static brainbeats_backend.QueryBuilder;
 
 namespace brainbeats_backend.Controllers
 {
@@ -41,7 +41,7 @@ namespace brainbeats_backend.Controllers
         new JObject(
           new JProperty("firstName", $"test_first_name_{seed}"),
           new JProperty("lastName", $"test_last_name_{seed}"),
-          new JProperty("email", $"test_email_1_{seed}@email.com"),
+          new JProperty("id", $"test_email_1_{seed}@email.com"),
           new JProperty("seed", seed));
 
       // User 1 owns this sample
@@ -69,7 +69,7 @@ namespace brainbeats_backend.Controllers
         new JObject(
           new JProperty("name", "test_beat_name_1"),
           new JProperty("email", $"test_email_1_{seed}@email.com"),
-          new JProperty("isPrivate", "false"),
+          new JProperty("isPrivate", "true"),
           new JProperty("duration", "test_beat_duration_1"),
           new JProperty("image", "test_beat_duration_1"),
           new JProperty("instrumentList", "test_beat_instrument_list_1"),
@@ -111,7 +111,7 @@ namespace brainbeats_backend.Controllers
       // User 1 likes this beat
       JObject likeBeatObject1a =
         new JObject(
-          new JProperty("beatId", beatId1a),
+          new JProperty("vertexId", beatId1a),
           new JProperty("email", $"test_email_1_{seed}@email.com"));
 
       // User 1 owns this playlist consisting of the prior created beat
@@ -125,7 +125,7 @@ namespace brainbeats_backend.Controllers
           new JProperty("seed", seed));
 
       try {
-        await new BeatController().LikeBeat(likeBeatObject1a.ToString());
+        await new UserController().LikeVertex(likeBeatObject1a.ToString());
         await new PlaylistController().CreatePlaylist(playlistObject1a.ToString());
 
         return Ok();

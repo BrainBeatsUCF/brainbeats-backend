@@ -3,7 +3,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using static brainbeats_backend.Utility;
+using static brainbeats_backend.QueryBuilder;
 
 namespace brainbeats_backend.Controllers {
   [Route("api/[controller]")]
