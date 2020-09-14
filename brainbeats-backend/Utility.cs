@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 
 namespace brainbeats_backend {
-  public class Utility {
+  public static class Utility {
     // Ensures the incoming controller request is of type String
     public static string GetRequest(dynamic req) {
       return req.GetType().Equals(typeof(string)) ? req : req.ToString();
@@ -17,7 +17,9 @@ namespace brainbeats_backend {
     }
 
     public static HashSet<string> GetSchema(string vertexType) {
-      switch (vertexType.ToLower().Trim()) {
+      string type = vertexType.ToLowerInvariant().Trim();
+
+      switch (type) {
         case "user":
           return new HashSet<string> { "firstName", "lastName" };
         case "beat":

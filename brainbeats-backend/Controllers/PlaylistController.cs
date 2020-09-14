@@ -21,13 +21,13 @@ namespace brainbeats_backend.Controllers
 
       try {
         string playlistId = Guid.NewGuid().ToString();
-        List<KeyValuePair<string, string>> edges = new List<KeyValuePair<string, string>>();
+        List<KeyValuePair<string, string>> edges = new List<KeyValuePair<string, string>> {
+          new KeyValuePair<string, string>("OWNED_BY", body.GetValue("email").ToString())
+        };
 
         if (body.ContainsKey("beatId")) {
           edges.Add(new KeyValuePair<string, string>("CONTAINS", body.GetValue("beatId").ToString()));
         }
-
-        edges.Add(new KeyValuePair<string, string>("OWNED_BY", body.GetValue("email").ToString()));
 
         queryString = CreateVertexQuery("playlist", playlistId, body, edges);
       } catch {

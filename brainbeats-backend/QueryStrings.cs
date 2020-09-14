@@ -6,7 +6,7 @@ using static brainbeats_backend.QueryBuilder;
 using static brainbeats_backend.Utility;
 
 namespace brainbeats_backend {
-  public class QueryStrings {
+  public static class QueryStrings {
     // Creates a new vertex
     public static string CreateVertexQuery(string vertexType, string vertexId, JObject body) {
       HashSet<string> schema = GetSchema(vertexType);

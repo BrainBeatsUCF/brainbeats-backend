@@ -19,7 +19,7 @@ namespace brainbeats_backend.Controllers {
 
       try {
         string sampleId = Guid.NewGuid().ToString();
-        List<KeyValuePair<string, string>> edges = new List<KeyValuePair<string, string>>() {
+        List<KeyValuePair<string, string>> edges = new List<KeyValuePair<string, string>> {
           new KeyValuePair<string, string>("OWNED_BY", body.GetValue("email").ToString())
         };
 
