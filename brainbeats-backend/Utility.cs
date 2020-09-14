@@ -43,11 +43,11 @@ namespace brainbeats_backend {
         case "user":
           return new HashSet<string> { "firstName", "lastName" };
         case "beat":
-          return new HashSet<string> { "name", "email", "duration", "image", "isPrivate", "instrumentList", "attributes", "audio" };
+          return new HashSet<string> { "name", "duration", "image", "isPrivate", "instrumentList", "attributes", "audio" };
         case "sample":
-          return new HashSet<string> { "name", "email", "isPrivate", "attributes", "audio" };
+          return new HashSet<string> { "name", "isPrivate", "attributes", "audio" };
         case "playlist":
-          return new HashSet<string> { "name", "email", "image", "isPrivate" };
+          return new HashSet<string> { "name", "image", "isPrivate" };
         default:
           return null;
       }

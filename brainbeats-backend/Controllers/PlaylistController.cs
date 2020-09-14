@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-using static brainbeats_backend.QueryBuilder;
+using Newtonsoft.Json.Linq;
+using static brainbeats_backend.QueryStrings;
+using static brainbeats_backend.Utility;
 
 namespace brainbeats_backend.Controllers
 {
@@ -15,108 +15,89 @@ namespace brainbeats_backend.Controllers
     [HttpPost]
     [Route("create_playlist")]
     public async Task<IActionResult> CreatePlaylist(dynamic req) {
-      string request = GetRequest(req);
-      var body = JsonConvert.DeserializeObject<dynamic>(request);
+      JObject body = DeserializeRequest(req);
 
-      string playlistId = Guid.NewGuid().ToString();
-      string email = body.email;
-      string beatId = body.beatId;
-
-      string name = body.name;
-      string image = body.image;
-      string isPrivate = body.isPrivate;
-      string createdDate = GetCurrentTime();
-      string modifiedDate = GetCurrentTime();
-      string seed = body.seed;
-
-      StringBuilder queryString = new StringBuilder();
+      string queryString;
 
       try {
-        queryString.Append(CreateVertex("playlist", playlistId) +
-          AddProperty("name", name) +
-          AddProperty("image", image) +
-          AddProperty("isPrivate", isPrivate) +
-          AddProperty("createdDate", createdDate) +
-          AddProperty("modifiedDate", modifiedDate) +
-          CreateEdge("OWNED_BY", email));
+        string playlistId = Guid.NewGuid().ToString();
+        List<KeyValuePair<string, string>> edges = new List<KeyValuePair<string, string>>();
 
-        if (beatId != null) {
-          queryString.Append(EdgeSourceReference() + CreateEdge("CONTAINS", beatId));
+        if (body.ContainsKey("beatId")) {
+          edges.Add(new KeyValuePair<string, string>("CONTAINS", body.GetValue("beatId").ToString()));
         }
-      } catch {
-        return BadRequest("Malformed Request");
-      }
 
-      if (seed != null) {
-        queryString.Append(EdgeSourceReference() + AddProperty("seed", seed, false));
+        edges.Add(new KeyValuePair<string, string>("OWNED_BY", body.GetValue("email").ToString()));
+
+        queryString = CreateVertexQuery("playlist", playlistId, body, edges);
+      } catch {
+        return BadRequest("Malformed request");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString.ToString());
         return Ok(result);
       } catch {
-        return BadRequest();
+        return BadRequest("Something went wrong");
       }
     }
 
     [HttpPost]
     [Route("read_playlist")]
     public async Task<IActionResult> ReadPlaylist(dynamic req) {
-      string request = GetRequest(req);
-      var body = JsonConvert.DeserializeObject<dynamic>(request);
+      JObject body = DeserializeRequest(req);
 
-      string playlistId = body.playlistId;
+      string queryString;
 
-      if (playlistId == null) {
-        return BadRequest("Malformed Request");
+      try {
+        queryString = ReadVertexQuery(body.GetValue("playlistId").ToString());
+      } catch {
+        return BadRequest("Malformed request");
       }
-
-      string queryString = GetVertex(playlistId);
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
       } catch {
-        return BadRequest();
+        return BadRequest("Something went wrong");
       }
     }
 
     [HttpPost]
     [Route("read_playlist_beats")]
     public async Task<IActionResult> ReadPlaylistBeats(dynamic req) {
-      string request = GetRequest(req);
-      var body = JsonConvert.DeserializeObject<dynamic>(request);
+      JObject body = DeserializeRequest(req);
 
-      string playlistId = body.playlistId;
+      string queryString;
 
-      if (playlistId == null) {
-        return BadRequest("Malformed Request");
+      try {
+        queryString = GetOutNeighborsQuery("CONTAINS", "beat", body.GetValue("playlistId").ToString());
+      } catch {
+        return BadRequest("Malformed request");
       }
-
-      string queryString = GetVertex(playlistId) + GetOutNeighbors("CONTAINS");
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
       } catch {
-        return BadRequest();
+        return BadRequest("Something went wrong");
       }
     }
 
     [HttpPost]
     [Route("get_all_playlists")]
     public async Task<IActionResult> GetAllPlaylists(dynamic req) {
-      string request = GetRequest(req);
-      var body = JsonConvert.DeserializeObject<dynamic>(request);
+      JObject body = DeserializeRequest(req);
 
-      string email = body.email;
+      string queryStringPublic;
+      string queryStringPrivate;
 
-      if (email == null) {
+      try {
+        queryStringPublic = GetAllPublicVerticesQuery("playlist");
+        queryStringPrivate = GetAllPrivateVerticesQuery("playlist", body.GetValue("email").ToString());
+      } catch {
         return BadRequest("Malformed Request");
       }
-
-      string queryStringPublic = GetAllVertices("playlist") + HasProperty("isPrivate", "false");
-      string queryStringPrivate = GetVertex(email) + GetInNeighbors("OWNED_BY") + EdgeSourceReference() + HasLabel("playlist") + HasProperty("isPrivate", "true");
 
       try {
         var resultsPublic = await DatabaseConnection.Instance.ExecuteQuery(queryStringPublic);
@@ -134,32 +115,19 @@ namespace brainbeats_backend.Controllers
 
         return Ok(resultList);
       } catch {
-        return BadRequest();
+        return BadRequest("Something went wrong");
       }
     }
 
     [HttpPost]
     [Route("update_playlist")]
     public async Task<IActionResult> UpdatePlaylist(dynamic req) {
-      string request = GetRequest(req);
-      var body = JsonConvert.DeserializeObject<dynamic>(request);
+      JObject body = DeserializeRequest(req);
 
-      string playlistId = body.playlistId;
-
-      string name = body.name;
-      string image = body.image;
-      string isPrivate = body.isPrivate;
-      string modifiedDate = GetCurrentTime();
-
-      StringBuilder queryString = new StringBuilder();
-      bool required = false;
+      string queryString;
 
       try {
-        queryString.Append(GetVertex(playlistId) +
-          AddProperty("name", name, required) +
-          AddProperty("image", image, required) +
-          AddProperty("isPrivate", isPrivate, required) +
-          AddProperty("modifiedDate", modifiedDate));
+        queryString = UpdateVertexQuery("playlist", body.GetValue("playlistId").ToString(), body);
       } catch {
         return BadRequest("Malformed Request");
       }
@@ -168,82 +136,70 @@ namespace brainbeats_backend.Controllers
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString.ToString());
         return Ok(result);
       } catch {
-        return BadRequest();
+        return BadRequest("Something went wrong");
       }
     }
 
     [HttpPost]
     [Route("update_playlist_delete_beat")]
     public async Task<IActionResult> UpdatePlaylistDeleteBeat(dynamic req) {
-      string request = GetRequest(req);
-      var body = JsonConvert.DeserializeObject<dynamic>(request);
+      JObject body = DeserializeRequest(req);
 
-      string playlistId = body.playlistId;
-      string beatId = body.beatId;
-      string modifiedDate = GetCurrentTime();
+      string queryString;
 
-      if (playlistId == null || beatId == null) {
+      try {
+        queryString = DeleteOutNeighborQuery("CONTAINS", body.GetValue("playlistId").ToString(), body.GetValue("beatId").ToString());
+      } catch {
         return BadRequest("Malformed Request");
       }
-
-      string queryString = GetVertex(playlistId) +
-        AddProperty("modifiedDate", modifiedDate) +
-        GetEdge("CONTAINS", beatId) +
-        Delete();
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
       } catch {
-        return BadRequest();
+        return BadRequest("Something went wrong");
       }
     }
 
     [HttpPost]
     [Route("update_playlist_add_beat")]
     public async Task<IActionResult> UpdatePlaylistAddBeat(dynamic req) {
-      string request = GetRequest(req);
-      var body = JsonConvert.DeserializeObject<dynamic>(request);
+      JObject body = DeserializeRequest(req);
 
-      string playlistId = body.playlistId;
-      string beatId = body.beatId;
-      string modifiedDate = GetCurrentTime();
+      string queryString;
 
-      if (playlistId == null || beatId == null) {
-        return BadRequest("Malformed Request");
+      try {
+        queryString = CreateOutNeighborQuery("CONTAINS", body.GetValue("playlistId").ToString(), body.GetValue("beatId").ToString());
+      } catch {
+        return BadRequest("Malformed request");
       }
-
-      string queryString = GetVertex(playlistId) +
-        AddProperty("modifiedDate", modifiedDate) +
-        CreateEdge("CONTAINS", beatId);
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
       } catch {
-        return BadRequest();
+        return BadRequest("Something went wrong");
       }
     }
 
     [HttpPost]
     [Route("delete_playlist")]
     public async Task<IActionResult> DeletePlaylist(dynamic req) {
-      string request = GetRequest(req);
-      var body = JsonConvert.DeserializeObject<dynamic>(request);
+      JObject body = DeserializeRequest(req);
 
-      string playlistId = body.playlistId;
+      string queryString;
 
-      if (playlistId == null) {
-        return BadRequest("Malformed Request");
+      try {
+        queryString = DeleteVertexQuery(body.GetValue("playlistId").ToString());
+      } catch {
+        return BadRequest("Malformed request");
       }
-
-      string queryString = GetVertex(playlistId) + Delete();
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
       } catch {
-        return BadRequest();
+        return BadRequest("Something went wrong");
       }
     }
   }

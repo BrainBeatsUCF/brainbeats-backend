@@ -1,4 +1,5 @@
 ﻿using System;
+using static brainbeats_backend.Utility;
 
 namespace brainbeats_backend {
   public static class QueryBuilder {
@@ -40,7 +41,7 @@ namespace brainbeats_backend {
 
     // Returns the edge that joins the current vertex and matches the specified edge type 
     // and destination
-    public static string GetEdge(string edgeType, string dest) {
+    public static string GetOutEdge(string edgeType, string dest) {
       return $".outE('{edgeType}').where(inV().has('id', '{dest}'))";
     }
 

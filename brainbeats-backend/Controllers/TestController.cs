@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using static brainbeats_backend.QueryBuilder;
+using static brainbeats_backend.Utility;
 
 namespace brainbeats_backend.Controllers
 {
@@ -16,14 +15,13 @@ namespace brainbeats_backend.Controllers
     [HttpPost]
     [Route("create")]
     public async Task<IActionResult> CreateSeed(dynamic req) {
-      string request = GetRequest(req);
-      var body = JsonConvert.DeserializeObject<dynamic>(request);
+      JObject body = DeserializeRequest(req);
 
-      string seed = body.seed;
-
-      if (seed == null) {
+      if (!body.ContainsKey("seed")) {
         return BadRequest("Malformed Request");
       }
+
+      string seed = body.GetValue("seed").ToString();
 
       // Delete the current seed if it exists
       JObject deleteSeedObject =
@@ -41,7 +39,7 @@ namespace brainbeats_backend.Controllers
         new JObject(
           new JProperty("firstName", $"test_first_name_{seed}"),
           new JProperty("lastName", $"test_last_name_{seed}"),
-          new JProperty("id", $"test_email_1_{seed}@email.com"),
+          new JProperty("email", $"test_email_1_{seed}@email.com"),
           new JProperty("seed", seed));
 
       // User 1 owns this sample

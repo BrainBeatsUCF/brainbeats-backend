@@ -33,7 +33,7 @@ namespace brainbeats_backend {
 
     public Task<ResultSet<dynamic>> ExecuteQuery(string query) {
       try {
-          return gremlinClient.SubmitAsync<dynamic>(query);
+         return gremlinClient.SubmitAsync<dynamic>(query);
       } catch (ResponseException e) {
         Console.WriteLine("\tRequest Error!");
 
