@@ -10,7 +10,7 @@ namespace brainbeats_backend.Controllers
 {
   [Route("api/[controller]")]
   [ApiController]
-  public class TestController : ControllerBase
+  public class SeedController : ControllerBase
   {
     [HttpPost]
     [Route("create")]
