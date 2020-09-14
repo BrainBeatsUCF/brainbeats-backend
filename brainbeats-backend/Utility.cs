@@ -10,28 +10,6 @@ namespace brainbeats_backend {
       return req.GetType().Equals(typeof(string)) ? req : req.ToString();
     }
 
-    // Ensures all required fields are supplied in the request body for vertex creation
-    public static bool ValidateCreateRequest(JObject body, HashSet<string> fields) {
-      foreach (string s in fields) {
-        if (!body.ContainsKey(s)) {
-          return false;
-        }
-      }
-
-      return true;
-    }
-
-    // Ensures the only allowed fields are supplied in the request body for vertex modification
-    public static bool ValidateEditRequest(JObject body, HashSet<string> fields) {
-      foreach (KeyValuePair<string, JToken> prop in body) {
-        if (!fields.Contains(prop.Key)) {
-          return false;
-        }
-      }
-
-      return true;
-    }
-
     // Gets the current UNIX time
     public static string GetCurrentTime() {
       int unixTimestamp = (int)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
