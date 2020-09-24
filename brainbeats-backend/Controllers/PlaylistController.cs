@@ -71,7 +71,7 @@ namespace brainbeats_backend.Controllers
       string queryString;
 
       try {
-        queryString = GetOutNeighborsQuery("CONTAINS", "beat", body.GetValue("playlistId").ToString());
+        queryString = GetOutNeighborsQuery("beat", "CONTAINS", body.GetValue("playlistId").ToString());
       } catch {
         return BadRequest("Malformed request");
       }

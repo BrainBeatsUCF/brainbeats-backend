@@ -9,8 +9,7 @@ using static brainbeats_backend.Utility;
 namespace brainbeats_backend.Controllers {
   [Route("api/[controller]")]
   [ApiController]
-  public class BeatController : ControllerBase
-  {
+  public class BeatController : ControllerBase {
     [HttpPost]
     [Route("create_beat")]
     public async Task<IActionResult> CreateBeat(dynamic req) {
@@ -26,11 +25,11 @@ namespace brainbeats_backend.Controllers {
 
         queryString = CreateVertexQuery("beat", beatId, body, edges);
       } catch {
-        return BadRequest("Malformed Request");
+        return BadRequest("Malformed request");
       }
 
       try {
-        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString.ToString());
+        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
       } catch {
         return BadRequest("Something went wrong");

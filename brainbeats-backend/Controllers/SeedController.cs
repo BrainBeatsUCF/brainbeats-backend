@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -30,105 +31,154 @@ namespace brainbeats_backend.Controllers
 
       try {
         await DeleteSeed(deleteSeedObject.ToString()).ConfigureAwait(false);
+
+        System.Threading.Thread.Sleep(5000);
       } catch {
         return BadRequest("Error deleting prior seed");
       }
 
-      // User 1
-      JObject userObject1 =
-        new JObject(
-          new JProperty("firstName", $"test_first_name_{seed}"),
-          new JProperty("lastName", $"test_last_name_{seed}"),
-          new JProperty("email", $"test_email_1_{seed}@email.com"),
-          new JProperty("seed", seed));
-
-      // User 1 owns this sample
-      JObject sampleObject1a =
-        new JObject(
-          new JProperty("name", "test_sample_name_1"),
-          new JProperty("email", $"test_email_1_{seed}@email.com"),
-          new JProperty("isPrivate", "false"),
-          new JProperty("attributes", "test_sample_attributes_1"),
-          new JProperty("audio", "test_sample_audio_1"),
-          new JProperty("seed", seed));
-
-      // User 1 owns this sample
-      JObject sampleObject1b =
-        new JObject(
-          new JProperty("name", "test_sample_name_2"),
-          new JProperty("email", $"test_email_1_{seed}@email.com"),
-          new JProperty("isPrivate", "false"),
-          new JProperty("attributes", "test_sample_attributes_2"),
-          new JProperty("audio", "test_sample_audio_2"),
-          new JProperty("seed", seed));
-
-      // User 1 owns this beat
-      JObject beatObject1a =
-        new JObject(
-          new JProperty("name", "test_beat_name_1"),
-          new JProperty("email", $"test_email_1_{seed}@email.com"),
-          new JProperty("isPrivate", "true"),
-          new JProperty("duration", "test_beat_duration_1"),
-          new JProperty("image", "test_beat_duration_1"),
-          new JProperty("instrumentList", "test_beat_instrument_list_1"),
-          new JProperty("attributes", "test_beat_attributes_1"),
-          new JProperty("audio", "test_beat_audio_1"),
-          new JProperty("seed", seed));
-
-      // User 1 owns this beat
-      JObject beatObject1b =
-        new JObject(
-          new JProperty("name", "test_beat_name_2"),
-          new JProperty("email", $"test_email_1_{seed}@email.com"),
-          new JProperty("isPrivate", "false"),
-          new JProperty("duration", "test_beat_duration_2"),
-          new JProperty("image", "test_beat_duration_2"),
-          new JProperty("instrumentList", "test_beat_instrument_list_2"),
-          new JProperty("attributes", "test_beat_attributes_2"),
-          new JProperty("audio", "test_beat_audio_2"),
-          new JProperty("seed", seed));
-
-      string beatId1a;
-
       try {
-        await new UserController().CreateUser(userObject1.ToString());
-        await new SampleController().CreateSample(sampleObject1a.ToString());
-        await new SampleController().CreateSample(sampleObject1b.ToString());
+        for (int user = 0; user < 1; user++) {
+          JObject userObject =
+            new JObject(
+              new JProperty("firstName", $"test_first_name_{user}_{seed}"),
+              new JProperty("lastName", $"test_last_name_{user}_{seed}"),
+              new JProperty("email", $"test_email_{user}_{seed}@email.com"),
+              new JProperty("seed", seed));
 
-        IActionResult resSet = await new BeatController().CreateBeat(beatObject1a.ToString());
-        OkObjectResult okResult = resSet as OkObjectResult;
+          await new UserController().CreateUser(userObject.ToString());
 
-        IEnumerable<dynamic> resEnum = okResult.Value as IEnumerable<dynamic>;
-        beatId1a = resEnum.First()["id"];
+          List<JObject> beatList = new List<JObject>();
+          List<JObject> sampleList = new List<JObject>();
 
-        await new BeatController().CreateBeat(beatObject1b.ToString());
-      } catch {
-        return BadRequest("Error creating base vertices and edges");
-      }
+          for (int beat = 0; beat < 5; beat++) {
+            // User 1 owns this beat
+            JObject beatObject =
+              new JObject(
+                new JProperty("name", $"test_beat_{user}_{beat}"),
+                new JProperty("email", $"test_email_{user}_{seed}@email.com"),
+                new JProperty("isPrivate", "false"),
+                new JProperty("attributes", "{}"),
+                new JProperty("audio", $"test_beat_audio_{user}_{beat}"),
+                new JProperty("instrumentList", $"test_beat_instrumentList_{user}_{beat}"),
+                new JProperty("duration", $"test_beat_duration_{user}_{beat}"),
+                new JProperty("image", $"test_beat_image_{user}_{beat}"),
+                new JProperty("seed", seed));
 
-      // User 1 likes this beat
-      JObject likeBeatObject1a =
-        new JObject(
-          new JProperty("vertexId", beatId1a),
-          new JProperty("email", $"test_email_1_{seed}@email.com"));
+            beatList.Add(beatObject);
+          }
 
-      // User 1 owns this playlist consisting of the prior created beat
-      JObject playlistObject1a =
-        new JObject(
-          new JProperty("name", "test_playlist_name_1"),
-          new JProperty("email", $"test_email_1_{seed}@email.com"),
-          new JProperty("isPrivate", "false"),
-          new JProperty("image", "test_playlist_image_1"),
-          new JProperty("beatId", beatId1a),
-          new JProperty("seed", seed));
+          for (int sample = 0; sample < 2; sample++) {
+            JObject sampleObject =
+              new JObject(
+                new JProperty("name", $"test_sample_{user}_{sample}"),
+                new JProperty("email", $"test_email_{user}_{seed}@email.com"),
+                new JProperty("isPrivate", "false"),
+                new JProperty("attributes", "{}"),
+                new JProperty("audio", $"test_beat_audio_{user}_{sample}"),
+                new JProperty("seed", seed));
 
-      try {
-        await new UserController().LikeVertex(likeBeatObject1a.ToString());
-        await new PlaylistController().CreatePlaylist(playlistObject1a.ToString());
+            sampleList.Add(sampleObject);
+          }
+
+          List<string> beatIds = new List<string>();
+          List<string> sampleIds = new List<string>();
+
+          foreach (JObject obj in beatList) {
+            IActionResult resSet = await new BeatController().CreateBeat(obj.ToString());
+            OkObjectResult okResult = resSet as OkObjectResult;
+
+            IEnumerable<dynamic> resEnum = okResult.Value as IEnumerable<dynamic>;
+            string beatId = resEnum.First()["id"];
+
+            beatIds.Add(beatId);
+
+            System.Threading.Thread.Sleep(1000);
+          }
+
+          foreach (JObject obj in sampleList) {
+            IActionResult resSet = await new SampleController().CreateSample(obj.ToString());
+            OkObjectResult okResult = resSet as OkObjectResult;
+
+            IEnumerable<dynamic> resEnum = okResult.Value as IEnumerable<dynamic>;
+            string sampleId = resEnum.First()["id"];
+
+            sampleIds.Add(sampleId);
+
+            System.Threading.Thread.Sleep(1000);
+          }
+
+          Console.WriteLine(sampleIds.ToString());
+
+          string playlistEvensId = "";
+          string playlistOddsId = "";
+
+          for (int i = 0; i < beatIds.Count(); i++) {
+            // Even numbers belong in playlist 1, odd numbers belong in playlist 2
+            if (i % 2 == 0) {
+              if (i == 0) {
+                JObject playlistObject =
+                  new JObject(
+                    new JProperty("name", $"test_playlist_name_{user}_{i}"),
+                    new JProperty("email", $"test_email_{user}_{seed}@email.com"),
+                    new JProperty("isPrivate", "false"),
+                    new JProperty("image", $"test_playlist_image_{user}_{i}"),
+                    new JProperty("beatId", beatIds[i]),
+                    new JProperty("seed", seed));
+
+                IActionResult resSet = await new PlaylistController().CreatePlaylist(playlistObject.ToString());
+                OkObjectResult okResult = resSet as OkObjectResult;
+
+                IEnumerable<dynamic> resEnum = okResult.Value as IEnumerable<dynamic>;
+                playlistEvensId = resEnum.First()["id"];
+              } else {
+                JObject addBeatToPlaylistObject =
+                  new JObject(
+                    new JProperty("beatId", beatIds[i]),
+                    new JProperty("playlistId", playlistEvensId));
+                await new PlaylistController().UpdatePlaylistAddBeat(addBeatToPlaylistObject.ToString());
+              }
+            } else {
+              if (i == 1) {
+                JObject playlistObject =
+                  new JObject(
+                    new JProperty("name", $"test_playlist_name_{user}_{i}"),
+                    new JProperty("email", $"test_email_{user}_{seed}@email.com"),
+                    new JProperty("isPrivate", "false"),
+                    new JProperty("image", $"test_playlist_image_{user}_{i}"),
+                    new JProperty("beatId", beatIds[i]),
+                    new JProperty("seed", seed));
+
+                IActionResult resSet = await new PlaylistController().CreatePlaylist(playlistObject.ToString());
+                OkObjectResult okResult = resSet as OkObjectResult;
+
+                IEnumerable<dynamic> resEnum = okResult.Value as IEnumerable<dynamic>;
+                playlistOddsId = resEnum.First()["id"];
+              } else {
+                JObject addBeatToPlaylistObject =
+                  new JObject(
+                    new JProperty("beatId", beatIds[i]),
+                    new JProperty("playlistId", playlistOddsId));
+                await new PlaylistController().UpdatePlaylistAddBeat(addBeatToPlaylistObject.ToString());
+              }
+            }
+
+            System.Threading.Thread.Sleep(1000);
+
+            JObject likeBeatObject =
+              new JObject(
+                new JProperty("vertexId", beatIds[i]),
+                new JProperty("email", $"test_email_{user}_{seed}@email.com"));
+
+            await new UserController().LikeVertex(likeBeatObject.ToString());
+
+            System.Threading.Thread.Sleep(1000);
+          }
+        }
 
         return Ok();
       } catch {
-        return BadRequest("Error creating extra vertices and edges");
+        return BadRequest("Error");
       }
     }
 
