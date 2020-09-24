@@ -108,8 +108,6 @@ namespace brainbeats_backend.Controllers
             System.Threading.Thread.Sleep(1000);
           }
 
-          Console.WriteLine(sampleIds.ToString());
-
           string playlistEvensId = "";
           string playlistOddsId = "";
 
