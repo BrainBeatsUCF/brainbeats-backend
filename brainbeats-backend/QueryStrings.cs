@@ -1,7 +1,13 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using brainbeats_backend.Controllers;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Security.Policy;
 using System.Text;
+using System.Threading.Tasks;
 using static brainbeats_backend.QueryBuilder;
 using static brainbeats_backend.Utility;
 
@@ -26,6 +32,41 @@ namespace brainbeats_backend {
 
       if (body.ContainsKey("seed")) {
         queryString.Append(AddProperty("seed", body.GetValue("seed").ToString()));
+      }
+
+      return queryString.ToString();
+    }
+
+    public static async Task<string> CreateVertexQueryAsync(string vertexType, Object obj) {
+      StringBuilder queryString = new StringBuilder(CreateVertex(vertexType, Guid.NewGuid().ToString()));
+
+      foreach (PropertyInfo prop in obj.GetType().GetProperties()) {
+        var type = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+        if (type == typeof(IFormFile)) {
+          string url = await StorageConnection.Instance.UploadFileAsync((IFormFile) prop.GetValue(obj, null), vertexType);
+          queryString.Append(AddProperty(prop.Name, url));
+        } else {
+          // Append if prop is seed and non-null, prop is not seed, prop is not email
+          if ((prop.Name.Equals("seed") && prop.GetValue(obj) != null) || (!prop.Name.Equals("seed") && !prop.Name.Equals("email"))) {
+            Console.WriteLine("I got here w/ prop " + prop);
+            queryString.Append(AddProperty(prop.Name, prop.GetValue(obj).ToString()));
+          }
+        }
+      }
+
+      queryString.Append(AddProperty("createdDate", GetCurrentTime()));
+      queryString.Append(AddProperty("modifiedDate", GetCurrentTime()));
+
+      return queryString.ToString();
+    }
+
+    // Creates a new vertex with outgoing edges
+    // Each pair in the edges list has the schema <edge type, destination>
+    public static async Task<string> CreateVertexQueryAsync(string vertexType, Object obj, List<KeyValuePair<string, string>> edges) {
+      StringBuilder queryString = new StringBuilder(await CreateVertexQueryAsync(vertexType, obj));
+
+      foreach (KeyValuePair<string, string> pair in edges) {
+        queryString.Append(CreateEdge(pair.Key, pair.Value) + EdgeSourceReference());
       }
 
       return queryString.ToString();

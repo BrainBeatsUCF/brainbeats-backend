@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -20,15 +21,7 @@ namespace brainbeats_backend {
       blobServiceClient = new BlobServiceClient(configuration["Storage:ConnectionString"]);
     }
 
-    public async Task<string> UploadSample(IFormFile file) {
-      return await UploadFileAsync(file, "samples");
-    }
-
-    public async Task<string> UploadBeat(IFormFile file) {
-      return await UploadFileAsync(file, "beats");
-    }
-
-    private async Task<string> UploadFileAsync(IFormFile file, string containerName) {
+    public async Task<string> UploadFileAsync(IFormFile file, string containerName) {
       BlobContainerClient containerClient;
 
       try {

@@ -1,29 +1,39 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using static brainbeats_backend.QueryStrings;
 using static brainbeats_backend.Utility;
 
 namespace brainbeats_backend.Controllers {
+  public class Beat {
+    public string email { get; set; }
+    public string name { get; set; }
+    public IFormFile image { get; set; }
+    public bool isPrivate { get; set; }
+    public string instrumentList { get; set; }
+    public IFormFile beat { get; set; }
+    public string attributes { get; set; }
+    public int duration { get; set; }
+    public string seed { get; set; }
+  }
+
   [Route("api/[controller]")]
   [ApiController]
   public class BeatController : ControllerBase {
     [HttpPost]
     [Route("create_beat")]
-    public async Task<IActionResult> CreateBeat(dynamic req) {
-      JObject body = DeserializeRequest(req);
-
+    public async Task<IActionResult> CreateBeat([FromForm] Beat request) {
       string queryString;
 
       try {
-        string beatId = Guid.NewGuid().ToString();
         List<KeyValuePair<string, string>> edges = new List<KeyValuePair<string, string>> {
-          new KeyValuePair<string, string>("OWNED_BY", body.GetValue("email").ToString())
+          new KeyValuePair<string, string>("OWNED_BY", request.email)
         };
 
-        queryString = CreateVertexQuery("beat", beatId, body, edges);
+        queryString = await CreateVertexQueryAsync("beat", request, edges);
       } catch {
         return BadRequest("Malformed request");
       }
