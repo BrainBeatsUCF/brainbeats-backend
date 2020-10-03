@@ -13,7 +13,7 @@ using static brainbeats_backend.Utility;
 
 namespace brainbeats_backend {
   public static class QueryStrings {
-    // Creates a new vertex
+    // Creates a new vertex with an input JObject
     public static string CreateVertexQuery(string vertexType, string vertexId, JObject body) {
       HashSet<string> schema = GetSchema(vertexType);
       StringBuilder queryString = new StringBuilder(CreateVertex(vertexType, vertexId));
@@ -37,6 +37,7 @@ namespace brainbeats_backend {
       return queryString.ToString();
     }
 
+    // Creates a new vertex with outgoing edges asynchronously with file uploads with an input Object
     public static async Task<string> CreateVertexQueryAsync(string vertexType, Object obj) {
       StringBuilder queryString = new StringBuilder(CreateVertex(vertexType, Guid.NewGuid().ToString()));
 
@@ -60,8 +61,8 @@ namespace brainbeats_backend {
       return queryString.ToString();
     }
 
-    // Creates a new vertex with outgoing edges
-    // Each pair in the edges list has the schema <edge type, destination>
+    // Creates a new vertex with outgoing edges asynchronously with file uploads with an input Object,
+    // and creates corresponding edges; ach pair in the edges list has the schema <edge type, destination>
     public static async Task<string> CreateVertexQueryAsync(string vertexType, Object obj, List<KeyValuePair<string, string>> edges) {
       StringBuilder queryString = new StringBuilder(await CreateVertexQueryAsync(vertexType, obj));
 
@@ -72,8 +73,8 @@ namespace brainbeats_backend {
       return queryString.ToString();
     }
 
-    // Creates a new vertex with outgoing edges
-    // Each pair in the edges list has the schema <edge type, destination>
+    // Creates a new vertex with outgoing edges with an input JObject,
+    // and creates corresponding edges; ach pair in the edges list has the schema <edge type, destination>
     public static string CreateVertexQuery(string vertexType, string vertexId, JObject body, List<KeyValuePair<string, string>> edges) {
       StringBuilder queryString = new StringBuilder(CreateVertexQuery(vertexType, vertexId, body));
 

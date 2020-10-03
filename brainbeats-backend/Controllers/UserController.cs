@@ -259,5 +259,26 @@ namespace brainbeats_backend.Controllers {
         return BadRequest("Something went wrong");
       }
     }
+
+    [HttpPost]
+    [Route("get_vertex_owner")]
+    public async Task<IActionResult> GetVertexOwner(dynamic req) {
+      JObject body = DeserializeRequest(req);
+
+      string queryString;
+
+      try {
+        queryString = GetOutNeighborsQuery("user", "OWNED_BY", body.GetValue("vertexId").ToString());
+      } catch {
+        return BadRequest("Malformed request");
+      }
+
+      try {
+        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
+        return Ok(result);
+      } catch {
+        return BadRequest("Something went wrong");
+      }
+    }
   }
 }
