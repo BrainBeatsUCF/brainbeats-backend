@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Security;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using static brainbeats_backend.QueryStrings;
@@ -8,6 +10,17 @@ namespace brainbeats_backend.Controllers {
   [Route("api/[controller]")]
   [ApiController]
   public class UserController : ControllerBase {
+    [HttpPost]
+    [Route("test")]
+    public async Task<IActionResult> Test(dynamic req) {
+      JObject body = DeserializeRequest(req);
+
+      await AuthConnection.Instance.ListUsers();
+      //await AuthConnection.Instance.CreateUser();
+      //await AuthConnection.Instance.ListUsers();
+      return Ok();
+    }
+
     [HttpPost]
     [Route("create_user")]
     public async Task<IActionResult> CreateUser(dynamic req) {
