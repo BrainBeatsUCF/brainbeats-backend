@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json.Linq;
 using static brainbeats_backend.QueryStrings;
 using static brainbeats_backend.Utility;
@@ -13,8 +14,14 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("create_beat")]
     public async Task<IActionResult> CreateBeat(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch {
+        return BadRequest("Unauthenticated");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
@@ -39,8 +46,14 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("read_beat")]
     public async Task<IActionResult> ReadBeat(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch {
+        return BadRequest("Unauthenticated");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
@@ -60,8 +73,14 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("get_all_beats")]
     public async Task<IActionResult> GetAllBeats(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch {
+        return BadRequest("Unauthenticated");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryStringPublic;
       string queryStringPrivate;
 
@@ -95,8 +114,14 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("update_beat")]
     public async Task<IActionResult> UpdateBeat(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch {
+        return BadRequest("Unauthenticated");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
@@ -116,8 +141,14 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("delete_beat")]
     public async Task<IActionResult> DeleteBeat(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch {
+        return BadRequest("Unauthenticated");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
