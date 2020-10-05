@@ -58,7 +58,6 @@ namespace brainbeats_backend {
       string stsDiscoveryEndpoint = "https://ucfbrainbeats.b2clogin.com/ucfbrainbeats.onmicrosoft.com/b2c_1_signupsignin/v2.0/.well-known/openid-configuration";
 
       ConfigurationManager<OpenIdConnectConfiguration> configManager = new ConfigurationManager<OpenIdConnectConfiguration>(stsDiscoveryEndpoint, new OpenIdConnectConfigurationRetriever());
-
       OpenIdConnectConfiguration config = configManager.GetConfigurationAsync().Result;
 
       TokenValidationParameters validationParameters = new TokenValidationParameters {
@@ -71,11 +70,8 @@ namespace brainbeats_backend {
       };
 
       JwtSecurityTokenHandler tokendHandler = new JwtSecurityTokenHandler();
-
       SecurityToken jwt;
-
       var result = tokendHandler.ValidateToken(token, validationParameters, out jwt);
-
       return jwt as JwtSecurityToken;
     }
 
@@ -100,7 +96,7 @@ namespace brainbeats_backend {
     public async Task<string> LoginUser(string email, string password) {
       var values = new Dictionary<string, string>
       {
-        { "client_id", this.appId },
+        { "client_id", appId },
         { "grant_type", "password" },
         { "username", email },
         { "password", password },

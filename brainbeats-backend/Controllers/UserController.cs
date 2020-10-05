@@ -9,28 +9,8 @@ using static brainbeats_backend.Utility;
 
 namespace brainbeats_backend.Controllers {
   [Route("api/[controller]")]
-  // [Produces("application/json")]
   [ApiController]
   public class UserController : ControllerBase {
-    [HttpPost]
-    [Route("test")]
-    public async Task<IActionResult> Test(dynamic req) {
-      try {
-        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
-        AuthConnection.Instance.ValidateToken(authorizationToken);
-      } catch {
-        return BadRequest("Unauthenticated");
-      }
-
-      JObject body = DeserializeRequest(req);
-
-      try {
-        return Ok();
-      } catch {
-        return BadRequest("Something went wrong");
-      }
-    }
-
     [HttpPost]
     [Route("login_user")]
     public async Task<IActionResult> LoginUser(dynamic req) {
