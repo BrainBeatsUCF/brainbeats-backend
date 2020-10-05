@@ -2,12 +2,14 @@
 using System.Security;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json.Linq;
 using static brainbeats_backend.QueryStrings;
 using static brainbeats_backend.Utility;
 
 namespace brainbeats_backend.Controllers {
   [Route("api/[controller]")]
+  // [Produces("application/json")]
   [ApiController]
   public class UserController : ControllerBase {
     [HttpPost]
@@ -15,10 +17,32 @@ namespace brainbeats_backend.Controllers {
     public async Task<IActionResult> Test(dynamic req) {
       JObject body = DeserializeRequest(req);
 
-      await AuthConnection.Instance.ListUsers();
-      //await AuthConnection.Instance.CreateUser();
-      //await AuthConnection.Instance.ListUsers();
-      return Ok();
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch {
+        return BadRequest("Unauthenticated");
+      }
+
+      try {
+        return Ok();
+      } catch {
+        return BadRequest("Something went wrong");
+      }
+    }
+
+    [HttpPost]
+    [Route("login_user")]
+    public async Task<IActionResult> LoginUser(dynamic req) {
+      JObject body = DeserializeRequest(req);
+
+      try {
+        string res = await AuthConnection.Instance.LoginUser(body.GetValue("email").ToString(), 
+          body.GetValue("password").ToString());
+        return Ok(res);
+      } catch {
+        return BadRequest("Something went wrong");
+      }
     }
 
     [HttpPost]
@@ -27,6 +51,13 @@ namespace brainbeats_backend.Controllers {
       JObject body = DeserializeRequest(req);
 
       string queryString;
+
+      try {
+        await AuthConnection.Instance.CreateUser($"{body.GetValue("firstName")} {body.GetValue("lastName")}",
+          body.GetValue("email").ToString(), body.GetValue("password").ToString());
+      } catch {
+        return BadRequest("Error in Azure Graph User Creation");
+      }
 
       try {
         queryString = CreateVertexQuery("user", body.GetValue("email").ToString(), body);
