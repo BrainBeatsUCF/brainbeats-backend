@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json.Linq;
 using static brainbeats_backend.QueryStrings;
 using static brainbeats_backend.Utility;
@@ -15,8 +16,14 @@ namespace brainbeats_backend.Controllers
     [HttpPost]
     [Route("create_playlist")]
     public async Task<IActionResult> CreatePlaylist(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch {
+        return BadRequest("Unauthenticated");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
@@ -45,8 +52,14 @@ namespace brainbeats_backend.Controllers
     [HttpPost]
     [Route("read_playlist")]
     public async Task<IActionResult> ReadPlaylist(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch {
+        return BadRequest("Unauthenticated");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
@@ -66,8 +79,14 @@ namespace brainbeats_backend.Controllers
     [HttpPost]
     [Route("read_playlist_beats")]
     public async Task<IActionResult> ReadPlaylistBeats(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch {
+        return BadRequest("Unauthenticated");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
@@ -87,8 +106,14 @@ namespace brainbeats_backend.Controllers
     [HttpPost]
     [Route("get_all_playlists")]
     public async Task<IActionResult> GetAllPlaylists(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch {
+        return BadRequest("Unauthenticated");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryStringPublic;
       string queryStringPrivate;
 
@@ -122,8 +147,14 @@ namespace brainbeats_backend.Controllers
     [HttpPost]
     [Route("update_playlist")]
     public async Task<IActionResult> UpdatePlaylist(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch {
+        return BadRequest("Unauthenticated");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
@@ -143,8 +174,14 @@ namespace brainbeats_backend.Controllers
     [HttpPost]
     [Route("update_playlist_delete_beat")]
     public async Task<IActionResult> UpdatePlaylistDeleteBeat(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch {
+        return BadRequest("Unauthenticated");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
@@ -164,8 +201,14 @@ namespace brainbeats_backend.Controllers
     [HttpPost]
     [Route("update_playlist_add_beat")]
     public async Task<IActionResult> UpdatePlaylistAddBeat(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch {
+        return BadRequest("Unauthenticated");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
@@ -185,8 +228,14 @@ namespace brainbeats_backend.Controllers
     [HttpPost]
     [Route("delete_playlist")]
     public async Task<IActionResult> DeletePlaylist(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch {
+        return BadRequest("Unauthenticated");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
