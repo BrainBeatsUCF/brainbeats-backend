@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using static brainbeats_backend.QueryStrings;
@@ -8,34 +9,39 @@ using static brainbeats_backend.Utility;
 
 namespace brainbeats_backend.Controllers
 {
+  public class Playlist {
+    public string email { get; set; }
+    public string name { get; set; }
+    public IFormFile image { get; set; }
+    public bool isPrivate { get; set; }
+    public string beatId { get; set; }
+  }
+
   [Route("api/[controller]")]
   [ApiController]
   public class PlaylistController : ControllerBase
   {
     [HttpPost]
     [Route("create_playlist")]
-    public async Task<IActionResult> CreatePlaylist(dynamic req) {
-      JObject body = DeserializeRequest(req);
-
+    public async Task<IActionResult> CreatePlaylist([FromForm] Playlist request) {
       string queryString;
 
       try {
-        string playlistId = Guid.NewGuid().ToString();
         List<KeyValuePair<string, string>> edges = new List<KeyValuePair<string, string>> {
-          new KeyValuePair<string, string>("OWNED_BY", body.GetValue("email").ToString())
+          new KeyValuePair<string, string>("OWNED_BY", request.email)
         };
 
-        if (body.ContainsKey("beatId")) {
-          edges.Add(new KeyValuePair<string, string>("CONTAINS", body.GetValue("beatId").ToString()));
+        if (request.beatId != null && request.beatId.Length > 0) {
+          edges.Add(new KeyValuePair<string, string>("CONTAINS", request.beatId));
         }
 
-        queryString = CreateVertexQuery("playlist", playlistId, body, edges);
+        queryString = await CreateVertexQueryAsync("playlist", request, edges);
       } catch {
         return BadRequest("Malformed request");
       }
 
       try {
-        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString.ToString());
+        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
       } catch {
         return BadRequest("Something went wrong");

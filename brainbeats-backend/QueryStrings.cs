@@ -1,13 +1,19 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using brainbeats_backend.Controllers;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Security.Policy;
 using System.Text;
+using System.Threading.Tasks;
 using static brainbeats_backend.QueryBuilder;
 using static brainbeats_backend.Utility;
 
 namespace brainbeats_backend {
   public static class QueryStrings {
-    // Creates a new vertex
+    // Creates a new vertex with an input JObject
     public static string CreateVertexQuery(string vertexType, string vertexId, JObject body) {
       HashSet<string> schema = GetSchema(vertexType);
       StringBuilder queryString = new StringBuilder(CreateVertex(vertexType, vertexId));
@@ -31,8 +37,43 @@ namespace brainbeats_backend {
       return queryString.ToString();
     }
 
-    // Creates a new vertex with outgoing edges
-    // Each pair in the edges list has the schema <edge type, destination>
+    // Creates a new vertex with outgoing edges asynchronously with file uploads with an input Object
+    public static async Task<string> CreateVertexQueryAsync(string vertexType, Object obj) {
+      StringBuilder queryString = new StringBuilder(CreateVertex(vertexType, Guid.NewGuid().ToString()));
+
+      foreach (PropertyInfo prop in obj.GetType().GetProperties()) {
+        var type = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+        if (type == typeof(IFormFile)) {
+          string url = await StorageConnection.Instance.UploadFileAsync((IFormFile) prop.GetValue(obj, null), vertexType);
+          queryString.Append(AddProperty(prop.Name, url));
+        } else {
+          // Append if prop is seed and non-null, prop is not seed, prop is not email
+          if ((prop.Name.Equals("seed") && prop.GetValue(obj) != null) || (!prop.Name.Equals("seed") && !prop.Name.Equals("email"))) {
+            queryString.Append(AddProperty(prop.Name, prop.GetValue(obj).ToString()));
+          }
+        }
+      }
+
+      queryString.Append(AddProperty("createdDate", GetCurrentTime()));
+      queryString.Append(AddProperty("modifiedDate", GetCurrentTime()));
+
+      return queryString.ToString();
+    }
+
+    // Creates a new vertex with outgoing edges asynchronously with file uploads with an input Object,
+    // and creates corresponding edges; ach pair in the edges list has the schema <edge type, destination>
+    public static async Task<string> CreateVertexQueryAsync(string vertexType, Object obj, List<KeyValuePair<string, string>> edges) {
+      StringBuilder queryString = new StringBuilder(await CreateVertexQueryAsync(vertexType, obj).ConfigureAwait(false));
+
+      foreach (KeyValuePair<string, string> pair in edges) {
+        queryString.Append(CreateEdge(pair.Key, pair.Value) + EdgeSourceReference());
+      }
+
+      return queryString.ToString();
+    }
+
+    // Creates a new vertex with outgoing edges with an input JObject,
+    // and creates corresponding edges; ach pair in the edges list has the schema <edge type, destination>
     public static string CreateVertexQuery(string vertexType, string vertexId, JObject body, List<KeyValuePair<string, string>> edges) {
       StringBuilder queryString = new StringBuilder(CreateVertexQuery(vertexType, vertexId, body));
 
