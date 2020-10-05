@@ -49,7 +49,6 @@ namespace brainbeats_backend {
         } else {
           // Append if prop is seed and non-null, prop is not seed, prop is not email
           if ((prop.Name.Equals("seed") && prop.GetValue(obj) != null) || (!prop.Name.Equals("seed") && !prop.Name.Equals("email"))) {
-            Console.WriteLine("I got here w/ prop " + prop);
             queryString.Append(AddProperty(prop.Name, prop.GetValue(obj).ToString()));
           }
         }
@@ -64,7 +63,7 @@ namespace brainbeats_backend {
     // Creates a new vertex with outgoing edges asynchronously with file uploads with an input Object,
     // and creates corresponding edges; ach pair in the edges list has the schema <edge type, destination>
     public static async Task<string> CreateVertexQueryAsync(string vertexType, Object obj, List<KeyValuePair<string, string>> edges) {
-      StringBuilder queryString = new StringBuilder(await CreateVertexQueryAsync(vertexType, obj));
+      StringBuilder queryString = new StringBuilder(await CreateVertexQueryAsync(vertexType, obj).ConfigureAwait(false));
 
       foreach (KeyValuePair<string, string> pair in edges) {
         queryString.Append(CreateEdge(pair.Key, pair.Value) + EdgeSourceReference());
