@@ -71,7 +71,7 @@ namespace brainbeats_backend {
 
       JwtSecurityTokenHandler tokendHandler = new JwtSecurityTokenHandler();
       SecurityToken jwt;
-      var result = tokendHandler.ValidateToken(token, validationParameters, out jwt);
+      tokendHandler.ValidateToken(token, validationParameters, out jwt);
       return jwt as JwtSecurityToken;
     }
 
