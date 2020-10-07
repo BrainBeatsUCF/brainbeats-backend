@@ -25,6 +25,8 @@ namespace brainbeats_backend {
     private GraphServiceClient graphClient { get; set; }
     private string appId { get; set; }
     private string tenantId { get; set; }
+    private string metadataAddress { get; set; }
+    private string tokenEndpoint { get; set; }
 
     public static void Init(IConfiguration configuration) {
       Instance = new AuthConnection(configuration);
@@ -33,6 +35,8 @@ namespace brainbeats_backend {
     private AuthConnection(IConfiguration configuration) {
       appId = configuration["Auth:AppId"];
       tenantId = configuration["Auth:TenantId"];
+      metadataAddress = configuration["Auth:MetadataAddress"];
+      tokenEndpoint = configuration["Auth:TokenEndpoint"];
       string clientSecret = configuration["Auth:ClientSecret"];
 
       // Initialize new Microsoft Graph client
@@ -49,15 +53,13 @@ namespace brainbeats_backend {
     }
 
     public JwtSecurityToken ValidateToken(string token) {
-      if (!token.StartsWith("Bearer ")) {
+      if (token == null || !token.StartsWith("Bearer ")) {
         throw new ArgumentException();
       }
 
       token = token.Split(" ")[1];
 
-      string stsDiscoveryEndpoint = "https://ucfbrainbeats.b2clogin.com/ucfbrainbeats.onmicrosoft.com/b2c_1_signupsignin/v2.0/.well-known/openid-configuration";
-
-      ConfigurationManager<OpenIdConnectConfiguration> configManager = new ConfigurationManager<OpenIdConnectConfiguration>(stsDiscoveryEndpoint, new OpenIdConnectConfigurationRetriever());
+      ConfigurationManager<OpenIdConnectConfiguration> configManager = new ConfigurationManager<OpenIdConnectConfiguration>(metadataAddress, new OpenIdConnectConfigurationRetriever());
       OpenIdConnectConfiguration config = configManager.GetConfigurationAsync().Result;
 
       TokenValidationParameters validationParameters = new TokenValidationParameters {
@@ -69,10 +71,16 @@ namespace brainbeats_backend {
         IssuerSigningKeys = config.SigningKeys
       };
 
-      JwtSecurityTokenHandler tokendHandler = new JwtSecurityTokenHandler();
-      SecurityToken jwt;
-      tokendHandler.ValidateToken(token, validationParameters, out jwt);
-      return jwt as JwtSecurityToken;
+      try {
+        JwtSecurityTokenHandler tokendHandler = new JwtSecurityTokenHandler();
+        SecurityToken jwt;
+        tokendHandler.ValidateToken(token, validationParameters, out jwt);
+
+        return jwt as JwtSecurityToken;
+      } catch (Exception e) {
+        Console.WriteLine("Error " + e);
+        throw e;
+      }
     }
 
     public async Task CreateUser(string name, string email, string password) {
@@ -105,7 +113,7 @@ namespace brainbeats_backend {
       };
 
       var content = new FormUrlEncodedContent(values);
-      var response = await this.httpClient.PostAsync("https://ucfbrainbeats.b2clogin.com/ucfbrainbeats.onmicrosoft.com/B2C_1_ropc_auth/oauth2/v2.0/token", content);
+      var response = await this.httpClient.PostAsync(tokenEndpoint, content);
       var responseString = await response.Content.ReadAsStringAsync();
 
       return responseString;

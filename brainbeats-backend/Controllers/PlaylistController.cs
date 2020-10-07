@@ -19,8 +19,10 @@ namespace brainbeats_backend.Controllers
       try {
         HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
         AuthConnection.Instance.ValidateToken(authorizationToken);
-      } catch {
-        return BadRequest("Unauthenticated");
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
       }
 
       JObject body = DeserializeRequest(req);
@@ -55,8 +57,10 @@ namespace brainbeats_backend.Controllers
       try {
         HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
         AuthConnection.Instance.ValidateToken(authorizationToken);
-      } catch {
-        return BadRequest("Unauthenticated");
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
       }
 
       JObject body = DeserializeRequest(req);
@@ -82,8 +86,10 @@ namespace brainbeats_backend.Controllers
       try {
         HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
         AuthConnection.Instance.ValidateToken(authorizationToken);
-      } catch {
-        return BadRequest("Unauthenticated");
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
       }
 
       JObject body = DeserializeRequest(req);
@@ -109,8 +115,10 @@ namespace brainbeats_backend.Controllers
       try {
         HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
         AuthConnection.Instance.ValidateToken(authorizationToken);
-      } catch {
-        return BadRequest("Unauthenticated");
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
       }
 
       JObject body = DeserializeRequest(req);
@@ -150,8 +158,10 @@ namespace brainbeats_backend.Controllers
       try {
         HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
         AuthConnection.Instance.ValidateToken(authorizationToken);
-      } catch {
-        return BadRequest("Unauthenticated");
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
       }
 
       JObject body = DeserializeRequest(req);
@@ -177,8 +187,10 @@ namespace brainbeats_backend.Controllers
       try {
         HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
         AuthConnection.Instance.ValidateToken(authorizationToken);
-      } catch {
-        return BadRequest("Unauthenticated");
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
       }
 
       JObject body = DeserializeRequest(req);
@@ -204,8 +216,10 @@ namespace brainbeats_backend.Controllers
       try {
         HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
         AuthConnection.Instance.ValidateToken(authorizationToken);
-      } catch {
-        return BadRequest("Unauthenticated");
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
       }
 
       JObject body = DeserializeRequest(req);
@@ -231,8 +245,10 @@ namespace brainbeats_backend.Controllers
       try {
         HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
         AuthConnection.Instance.ValidateToken(authorizationToken);
-      } catch {
-        return BadRequest("Unauthenticated");
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
       }
 
       JObject body = DeserializeRequest(req);
