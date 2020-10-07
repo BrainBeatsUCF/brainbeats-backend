@@ -77,7 +77,7 @@ namespace brainbeats_backend {
         tokendHandler.ValidateToken(token, validationParameters, out jwt);
 
         return jwt as JwtSecurityToken;
-      } catch (Exception e) {
+      } catch {
         throw;
       }
     }
