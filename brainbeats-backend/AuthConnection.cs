@@ -78,8 +78,7 @@ namespace brainbeats_backend {
 
         return jwt as JwtSecurityToken;
       } catch (Exception e) {
-        Console.WriteLine("Error " + e);
-        throw e;
+        throw;
       }
     }
 
