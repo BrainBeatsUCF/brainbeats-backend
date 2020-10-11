@@ -1,19 +1,27 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json.Linq;
 using static brainbeats_backend.QueryStrings;
 using static brainbeats_backend.Utility;
 
 namespace brainbeats_backend.Controllers {
+  public class Sample {
+    public string email { get; set; }
+    public string name { get; set; }
+    public bool isPrivate { get; set; }
+    public string attributes { get; set; }
+    public IFormFile audio { get; set; }
+  }
+
   [Route("api/[controller]")]
   [ApiController]
   public class SampleController : ControllerBase {
     [HttpPost]
     [Route("create_sample")]
-    public async Task<IActionResult> CreateSample(dynamic req) {
+    public async Task<IActionResult> CreateSample([FromForm] Sample request) {
       try {
         HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
         AuthConnection.Instance.ValidateToken(authorizationToken);
@@ -22,17 +30,15 @@ namespace brainbeats_backend.Controllers {
       } catch (Exception e) {
         return BadRequest($"Unauthenticated error: {e}");
       }
-
-      JObject body = DeserializeRequest(req);
+      
       string queryString;
 
       try {
-        string sampleId = Guid.NewGuid().ToString();
         List<KeyValuePair<string, string>> edges = new List<KeyValuePair<string, string>> {
-          new KeyValuePair<string, string>("OWNED_BY", body.GetValue("email").ToString())
+          new KeyValuePair<string, string>("OWNED_BY", request.email)
         };
 
-        queryString = CreateVertexQuery("sample", sampleId, body, edges);
+        queryString = await CreateVertexQueryAsync("sample", request, edges);
       } catch {
         return BadRequest("Malformed request");
       }
