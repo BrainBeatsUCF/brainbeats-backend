@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Security;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
-using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using static brainbeats_backend.QueryStrings;
 using static brainbeats_backend.Utility;
