@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -22,6 +22,15 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("create_sample")]
     public async Task<IActionResult> CreateSample([FromForm] Sample request) {
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
+      }
+      
       string queryString;
 
       try {
@@ -45,8 +54,16 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("read_sample")]
     public async Task<IActionResult> ReadSample(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
@@ -66,8 +83,16 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("get_all_samples")]
     public async Task<IActionResult> GetAllSamples(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryStringPublic;
       string queryStringPrivate;
 
@@ -101,8 +126,16 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("update_sample")]
     public async Task<IActionResult> UpdateSample(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
@@ -122,8 +155,16 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("delete_sample")]
     public async Task<IActionResult> DeleteSample(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {

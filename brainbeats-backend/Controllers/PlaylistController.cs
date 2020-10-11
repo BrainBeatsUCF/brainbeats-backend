@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -24,6 +24,15 @@ namespace brainbeats_backend.Controllers
     [HttpPost]
     [Route("create_playlist")]
     public async Task<IActionResult> CreatePlaylist([FromForm] Playlist request) {
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
+      }
+      
       string queryString;
 
       try {
@@ -41,7 +50,7 @@ namespace brainbeats_backend.Controllers
       }
 
       try {
-        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
+        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString.ToString());
         return Ok(result);
       } catch {
         return BadRequest("Something went wrong");
@@ -51,8 +60,16 @@ namespace brainbeats_backend.Controllers
     [HttpPost]
     [Route("read_playlist")]
     public async Task<IActionResult> ReadPlaylist(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
@@ -72,8 +89,16 @@ namespace brainbeats_backend.Controllers
     [HttpPost]
     [Route("read_playlist_beats")]
     public async Task<IActionResult> ReadPlaylistBeats(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
@@ -93,8 +118,16 @@ namespace brainbeats_backend.Controllers
     [HttpPost]
     [Route("get_all_playlists")]
     public async Task<IActionResult> GetAllPlaylists(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryStringPublic;
       string queryStringPrivate;
 
@@ -128,8 +161,16 @@ namespace brainbeats_backend.Controllers
     [HttpPost]
     [Route("update_playlist")]
     public async Task<IActionResult> UpdatePlaylist(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
@@ -149,8 +190,16 @@ namespace brainbeats_backend.Controllers
     [HttpPost]
     [Route("update_playlist_delete_beat")]
     public async Task<IActionResult> UpdatePlaylistDeleteBeat(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
@@ -170,8 +219,16 @@ namespace brainbeats_backend.Controllers
     [HttpPost]
     [Route("update_playlist_add_beat")]
     public async Task<IActionResult> UpdatePlaylistAddBeat(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
@@ -191,8 +248,16 @@ namespace brainbeats_backend.Controllers
     [HttpPost]
     [Route("delete_playlist")]
     public async Task<IActionResult> DeletePlaylist(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {

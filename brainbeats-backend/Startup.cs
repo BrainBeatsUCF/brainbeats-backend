@@ -18,6 +18,7 @@ namespace brainbeats_backend {
 
       StorageConnection.Init(configuration);
       DatabaseConnection.Init(configuration);
+      AuthConnection.Init(configuration);
     }
 
     public IConfiguration Configuration { get; }

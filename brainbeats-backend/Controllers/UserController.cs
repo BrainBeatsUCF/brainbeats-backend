@@ -1,5 +1,10 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Security;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
+using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using static brainbeats_backend.QueryStrings;
 using static brainbeats_backend.Utility;
@@ -9,11 +14,31 @@ namespace brainbeats_backend.Controllers {
   [ApiController]
   public class UserController : ControllerBase {
     [HttpPost]
+    [Route("login_user")]
+    public async Task<IActionResult> LoginUser(dynamic req) {
+      JObject body = DeserializeRequest(req);
+
+      try {
+        string res = await AuthConnection.Instance.LoginUser(body.GetValue("email").ToString(), 
+          body.GetValue("password").ToString());
+        return Ok(res);
+      } catch {
+        return BadRequest("Something went wrong");
+      }
+    }
+
+    [HttpPost]
     [Route("create_user")]
     public async Task<IActionResult> CreateUser(dynamic req) {
       JObject body = DeserializeRequest(req);
-
       string queryString;
+
+      try {
+        await AuthConnection.Instance.CreateUser($"{body.GetValue("firstName")} {body.GetValue("lastName")}",
+          body.GetValue("email").ToString(), body.GetValue("password").ToString());
+      } catch {
+        return BadRequest("Error in Azure Graph User Creation");
+      }
 
       try {
         queryString = CreateVertexQuery("user", body.GetValue("email").ToString(), body);
@@ -32,8 +57,16 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("read_user")]
     public async Task<IActionResult> ReadUser(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
@@ -53,8 +86,16 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("update_user")]
     public async Task<IActionResult> UpdateUser(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
@@ -74,8 +115,16 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("delete_user")]
     public async Task<IActionResult> DeleteUser(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
@@ -95,8 +144,16 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("get_liked_beats")]
     public async Task<IActionResult> GetLikedBeats(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
@@ -116,8 +173,16 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("get_liked_playlists")]
     public async Task<IActionResult> GetLikedPlaylists(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
@@ -137,8 +202,16 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("get_liked_samples")]
     public async Task<IActionResult> GetLikedSamples(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
@@ -158,8 +231,16 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("get_owned_beats")]
     public async Task<IActionResult> GetOwnedBeats(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
@@ -179,8 +260,16 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("get_owned_playlists")]
     public async Task<IActionResult> GetOwnedPlaylists(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
@@ -200,8 +289,16 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("get_owned_samples")]
     public async Task<IActionResult> GetOwnedSamples(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
@@ -221,8 +318,16 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("like_vertex")]
     public async Task<IActionResult> LikeVertex(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
@@ -242,8 +347,16 @@ namespace brainbeats_backend.Controllers {
     [HttpPost]
     [Route("unlike_vertex")]
     public async Task<IActionResult> UnlikeVertex(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
+      }
 
+      JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
