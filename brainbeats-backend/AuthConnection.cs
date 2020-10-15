@@ -82,11 +82,12 @@ namespace brainbeats_backend {
       }
     }
 
-    public async Task CreateUser(string name, string email, string password) {
+    public async Task CreateUser(string firstName, string lastName, string email, string password) {
+      /*
       var user = new User {
         AccountEnabled = true,
-        DisplayName = name,
-        MailNickname = email,
+        DisplayName = $"{firstName} {lastName}",
+        MailNickname = $"{firstName}_{lastName}",
         UserPrincipalName = email,
         PasswordProfile = new PasswordProfile {
           ForceChangePasswordNextSignIn = false,
@@ -98,6 +99,19 @@ namespace brainbeats_backend {
       await graphClient.Users
         .Request()
         .AddAsync(user);
+      */
+
+      var invitation = new Invitation {
+        InvitedUserEmailAddress = email,
+        InviteRedirectUrl = "https://brain-beats-server-docker.azurewebsites.net/.auth/login/aad",
+        SendInvitationMessage = true
+      };
+
+      var response = await graphClient.Invitations
+        .Request()
+        .AddAsync(invitation);
+
+      Console.WriteLine(response.InviteRedeemUrl);
     }
 
     public async Task<string> LoginUser(string email, string password) {
