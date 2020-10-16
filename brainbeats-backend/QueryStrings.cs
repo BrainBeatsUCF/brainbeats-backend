@@ -47,8 +47,8 @@ namespace brainbeats_backend {
           string url = await StorageConnection.Instance.UploadFileAsync((IFormFile) prop.GetValue(obj, null), vertexType);
           queryString.Append(AddProperty(prop.Name, url));
         } else {
-          // Append if prop is seed and non-null, prop is not seed, prop is not email
-          if ((prop.Name.Equals("seed") && prop.GetValue(obj) != null) || (!prop.Name.Equals("seed") && !prop.Name.Equals("email"))) {
+          // Append if prop is not null and prop is not seed or email
+          if (prop.GetValue(obj) != null && !prop.Name.Equals("seed") && !prop.Name.Equals("email")) {
             queryString.Append(AddProperty(prop.Name, prop.GetValue(obj).ToString()));
           }
         }

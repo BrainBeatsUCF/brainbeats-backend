@@ -30,13 +30,10 @@ namespace brainbeats_backend.Controllers {
       JObject body = DeserializeRequest(req);
       string queryString;
 
-      try {
-        await AuthConnection.Instance.CreateUser($"{body.GetValue("firstName")} {body.GetValue("lastName")}",
+        await AuthConnection.Instance.CreateUser(body.GetValue("firstName").ToString(), body.GetValue("lastName").ToString(),
           body.GetValue("email").ToString(), body.GetValue("password").ToString());
-      } catch {
-        return BadRequest("Error in Azure Graph User Creation");
-      }
 
+      return Ok();
       try {
         queryString = CreateVertexQuery("user", body.GetValue("email").ToString(), body);
       } catch {

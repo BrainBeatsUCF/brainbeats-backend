@@ -82,11 +82,11 @@ namespace brainbeats_backend {
       }
     }
 
-    public async Task CreateUser(string name, string email, string password) {
+    public async Task CreateUser(string firstName, string lastName, string email, string password) {
       var user = new User {
         AccountEnabled = true,
-        DisplayName = name,
-        MailNickname = email,
+        DisplayName = $"{firstName} {lastName}",
+        MailNickname = $"{firstName}_{lastName}",
         UserPrincipalName = email,
         PasswordProfile = new PasswordProfile {
           ForceChangePasswordNextSignIn = false,

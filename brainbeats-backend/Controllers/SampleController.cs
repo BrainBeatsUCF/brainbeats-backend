@@ -15,6 +15,7 @@ namespace brainbeats_backend.Controllers {
     public bool isPrivate { get; set; }
     public string attributes { get; set; }
     public IFormFile audio { get; set; }
+    public string seed { get; set; }
   }
 
   [Route("api/[controller]")]
