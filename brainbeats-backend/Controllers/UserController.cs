@@ -60,7 +60,7 @@ namespace brainbeats_backend.Controllers {
           new JProperty("name", claimsDictionary["given_name"] + ' ' + claimsDictionary["family_name"]),
           new JProperty("email", claimsDictionary["emails"]));
 
-        IActionResult createUserResult = await CreateUser(user.ToString());
+        IActionResult createUserResult = await CreateUser(user.ToString()).ConfigureAwait(false);
         OkObjectResult okResult = createUserResult as OkObjectResult;
 
         if (okResult.StatusCode != 200) {

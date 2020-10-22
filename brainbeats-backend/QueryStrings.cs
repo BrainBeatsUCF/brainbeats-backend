@@ -43,15 +43,17 @@ namespace brainbeats_backend {
       foreach (PropertyInfo prop in obj.GetType().GetProperties()) {
         var type = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
         if (type == typeof(IFormFile)) {
-          string url = await StorageConnection.Instance.UploadFileAsync((IFormFile) prop.GetValue(obj, null), vertexType);
+          string url = await StorageConnection.Instance.UploadFileAsync((IFormFile) prop.GetValue(obj), vertexType);
           queryString.Append(AddProperty(prop.Name, url));
         } else {
           // Append if prop is not null and prop is not seed or email
           if (prop.GetValue(obj) != null && !prop.Name.Equals("seed") && !prop.Name.Equals("email")) {
-            queryString.Append(AddProperty(prop.Name, prop.GetValue(obj).ToString()));
+            string value = prop.GetValue(obj).ToString();
+
+            queryString.Append(AddProperty(prop.Name, value));
 
             if (prop.Name.Equals("name")) {
-              queryString.Append(AddProperty("searchName", prop.GetValue(obj).ToString().ToLower()));
+              queryString.Append(AddProperty("searchName", value.ToLower()));
             }
           }
         }
