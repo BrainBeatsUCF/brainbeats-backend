@@ -52,6 +52,11 @@ namespace brainbeats_backend {
       httpClient = new HttpClient();
     }
 
+    public JwtSecurityToken DecodeToken(string token) {
+      var handler = new JwtSecurityTokenHandler();
+      return handler.ReadJwtToken(token);
+    }
+
     public JwtSecurityToken ValidateToken(string token) {
       if (token == null || !token.StartsWith("Bearer ")) {
         throw new ArgumentException();
@@ -87,7 +92,7 @@ namespace brainbeats_backend {
         AccountEnabled = true,
         DisplayName = $"{firstName} {lastName}",
         MailNickname = $"{firstName}_{lastName}",
-        UserPrincipalName = email,
+        UserPrincipalName = $"{firstName}_{lastName}@ucfbrainbeats.onmicrosoft.com",
         PasswordProfile = new PasswordProfile {
           ForceChangePasswordNextSignIn = false,
           ForceChangePasswordNextSignInWithMfa = false,

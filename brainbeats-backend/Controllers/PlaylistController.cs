@@ -89,6 +89,35 @@ namespace brainbeats_backend.Controllers
     }
 
     [HttpPost]
+    [Route("search_playlist")]
+    public async Task<IActionResult> SearchPlaylist(dynamic req) {
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
+      }
+
+      JObject body = DeserializeRequest(req);
+      string queryString;
+
+      try {
+        queryString = SearchVertexQuery("playlist", body.GetValue("name").ToString().ToLower());
+      } catch {
+        return BadRequest("Malformed request");
+      }
+
+      try {
+        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
+        return Ok(result);
+      } catch {
+        return BadRequest("Something went wrong");
+      }
+    }
+
+    [HttpPost]
     [Route("read_playlist_beats")]
     public async Task<IActionResult> ReadPlaylistBeats(dynamic req) {
       try {

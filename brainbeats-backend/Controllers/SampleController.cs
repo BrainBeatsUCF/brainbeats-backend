@@ -15,6 +15,7 @@ namespace brainbeats_backend.Controllers {
     public bool isPrivate { get; set; }
     public string attributes { get; set; }
     public IFormFile audio { get; set; }
+    public IFormFile image { get; set; }
     public string seed { get; set; }
   }
 
@@ -70,6 +71,35 @@ namespace brainbeats_backend.Controllers {
 
       try {
         queryString = ReadVertexQuery(body.GetValue("sampleId").ToString());
+      } catch {
+        return BadRequest("Malformed request");
+      }
+
+      try {
+        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
+        return Ok(result);
+      } catch {
+        return BadRequest("Something went wrong");
+      }
+    }
+
+    [HttpPost]
+    [Route("search_sample")]
+    public async Task<IActionResult> SearchSample(dynamic req) {
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
+      }
+
+      JObject body = DeserializeRequest(req);
+      string queryString;
+
+      try {
+        queryString = SearchVertexQuery("sample", body.GetValue("name").ToString().ToLower());
       } catch {
         return BadRequest("Malformed request");
       }

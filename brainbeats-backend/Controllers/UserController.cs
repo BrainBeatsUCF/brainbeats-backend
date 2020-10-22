@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
@@ -7,6 +10,13 @@ using static brainbeats_backend.QueryStrings;
 using static brainbeats_backend.Utility;
 
 namespace brainbeats_backend.Controllers {
+  public class User {
+    public string email { get; set; }
+    public string firstName { get; set; }
+    public string lastName { get; set; }
+    public string name { get; set; }
+  }
+
   [Route("api/[controller]")]
   [ApiController]
   public class UserController : ControllerBase {
@@ -15,12 +25,52 @@ namespace brainbeats_backend.Controllers {
     public async Task<IActionResult> LoginUser(dynamic req) {
       JObject body = DeserializeRequest(req);
 
+      string res;
       try {
-        string res = await AuthConnection.Instance.LoginUser(body.GetValue("email").ToString(), 
+         res = await AuthConnection.Instance.LoginUser(body.GetValue("email").ToString(), 
           body.GetValue("password").ToString());
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
+      }
+
+      // If the user exists in Azure B2C but doesn't exist in the database, create the user's profile
+      // First, get the user's claims from the generated JWT
+      JObject tokenObject = DeserializeRequest(res);
+      JwtSecurityToken jwt = AuthConnection.Instance.DecodeToken(tokenObject.GetValue("access_token").ToString());
+
+      Dictionary<string, string> claimsDictionary = new Dictionary<string, string>();
+      foreach (Claim claim in jwt.Claims) {
+        claimsDictionary[claim.Type] = claim.Value;
+      }
+
+      try {
+        // See if the user exists in the database
+        string queryString = ReadVertexQuery(claimsDictionary["emails"]);
+        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
+
+        // If the user exists, return Ok()
+        if (result.Count > 0) {
+          return Ok(res);
+        }
+
+        // Else, create the user
+        JObject user = new JObject(
+          new JProperty("firstName", claimsDictionary["given_name"]),
+          new JProperty("lastName", claimsDictionary["family_name"]),
+          new JProperty("name", claimsDictionary["given_name"] + ' ' + claimsDictionary["family_name"]),
+          new JProperty("email", claimsDictionary["emails"]));
+
+        IActionResult createUserResult = await CreateUser(user.ToString()).ConfigureAwait(false);
+        OkObjectResult okResult = createUserResult as OkObjectResult;
+
+        if (okResult.StatusCode != 200) {
+          return BadRequest("Error creating new user vertex when signing in user for the first time");
+        }
+
         return Ok(res);
-      } catch {
-        return BadRequest("Something went wrong");
+
+      } catch (Exception e) {
+        return BadRequest($"Unknown error signing user for the first time: {e}");
       }
     }
 
@@ -30,10 +80,6 @@ namespace brainbeats_backend.Controllers {
       JObject body = DeserializeRequest(req);
       string queryString;
 
-        await AuthConnection.Instance.CreateUser(body.GetValue("firstName").ToString(), body.GetValue("lastName").ToString(),
-          body.GetValue("email").ToString(), body.GetValue("password").ToString());
-
-      return Ok();
       try {
         queryString = CreateVertexQuery("user", body.GetValue("email").ToString(), body);
       } catch {
@@ -43,8 +89,8 @@ namespace brainbeats_backend.Controllers {
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -65,6 +111,35 @@ namespace brainbeats_backend.Controllers {
 
       try {
         queryString = ReadVertexQuery(body.GetValue("email").ToString());
+      } catch {
+        return BadRequest("Malformed request");
+      }
+
+      try {
+        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
+        return Ok(result);
+      } catch {
+        return BadRequest("Something went wrong");
+      }
+    }
+
+    [HttpPost]
+    [Route("search_user")]
+    public async Task<IActionResult> SearchUser(dynamic req) {
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Unauthenticated error: {e}");
+      }
+
+      JObject body = DeserializeRequest(req);
+      string queryString;
+
+      try {
+        queryString = SearchVertexQuery("user", body.GetValue("name").ToString().ToLower());
       } catch {
         return BadRequest("Malformed request");
       }

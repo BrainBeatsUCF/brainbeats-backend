@@ -1,7 +1,9 @@
-﻿using Newtonsoft.Json;
+﻿using brainbeats_backend.Controllers;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace brainbeats_backend {
   public static class Utility {
@@ -16,21 +18,17 @@ namespace brainbeats_backend {
       return unixTimestamp.ToString();
     }
 
-    public static HashSet<string> GetSchema(string vertexType) {
+    public static PropertyInfo [] GetSchema(string vertexType) {
       string type = vertexType.ToLowerInvariant().Trim();
 
-      switch (type) {
-        case "user":
-          return new HashSet<string> { "firstName", "lastName" };
-        case "beat":
-          return new HashSet<string> { "name", "image", "isPrivate", "instrumentList", "attributes", "audio", "duration" };
-        case "sample":
-          return new HashSet<string> { "name", "isPrivate", "attributes", "audio" };
-        case "playlist":
-          return new HashSet<string> { "name", "image", "isPrivate" };
-        default:
-          return null;
-      }
+      return type switch
+      {
+        "user" => new User().GetType().GetProperties(),
+        "beat" => new Beat().GetType().GetProperties(),
+        "sample" => new Sample().GetType().GetProperties(),
+        "playlist" => new Playlist().GetType().GetProperties(),
+        _ => null,
+      };
     }
 
     public static JObject DeserializeRequest(dynamic req) {

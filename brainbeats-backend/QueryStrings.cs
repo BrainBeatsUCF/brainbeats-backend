@@ -15,13 +15,12 @@ namespace brainbeats_backend {
   public static class QueryStrings {
     // Creates a new vertex with an input JObject
     public static string CreateVertexQuery(string vertexType, string vertexId, JObject body) {
-      HashSet<string> schema = GetSchema(vertexType);
       StringBuilder queryString = new StringBuilder(CreateVertex(vertexType, vertexId));
 
-      foreach (string field in schema) {
+      foreach (PropertyInfo prop in GetSchema(vertexType)) {
         // All fields in the schema are required
-        if (body.ContainsKey(field)) {
-          queryString.Append(AddProperty(field, body.GetValue(field).ToString()));
+        if (body.ContainsKey(prop.Name)) {
+          queryString.Append(AddProperty(prop.Name, body.GetValue(prop.Name).ToString()));
         } else {
           throw new ArgumentException();
         }
@@ -44,12 +43,18 @@ namespace brainbeats_backend {
       foreach (PropertyInfo prop in obj.GetType().GetProperties()) {
         var type = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
         if (type == typeof(IFormFile)) {
-          string url = await StorageConnection.Instance.UploadFileAsync((IFormFile) prop.GetValue(obj, null), vertexType);
+          string url = await StorageConnection.Instance.UploadFileAsync((IFormFile) prop.GetValue(obj), vertexType);
           queryString.Append(AddProperty(prop.Name, url));
         } else {
           // Append if prop is not null and prop is not seed or email
           if (prop.GetValue(obj) != null && !prop.Name.Equals("seed") && !prop.Name.Equals("email")) {
-            queryString.Append(AddProperty(prop.Name, prop.GetValue(obj).ToString()));
+            string value = prop.GetValue(obj).ToString();
+
+            queryString.Append(AddProperty(prop.Name, value));
+
+            if (prop.Name.Equals("name")) {
+              queryString.Append(AddProperty("searchName", value.ToLowerInvariant()));
+            }
           }
         }
       }
@@ -89,14 +94,18 @@ namespace brainbeats_backend {
       return GetVertex(vertexId);
     }
 
+    // Searches the specified vertex
+    public static string SearchVertexQuery(string vertexType, string searchWord) {
+      return GetAllVertices(vertexType) + HasProperty("searchName", searchWord);
+    }
+
     // Updates the specified vertex
     public static string UpdateVertexQuery(string vertexType, string vertexId, JObject body) {
-      HashSet<string> schema = GetSchema(vertexType);
       StringBuilder queryString = new StringBuilder(GetVertex(vertexId));
 
-      foreach (string field in schema) {
-        if (body.ContainsKey(field)) {
-          queryString.Append(AddProperty(field, body.GetValue(field).ToString()));
+      foreach (PropertyInfo prop in GetSchema(vertexType)) {
+        if (body.ContainsKey(prop.Name)) {
+          queryString.Append(AddProperty(prop.Name, body.GetValue(prop.Name).ToString()));
         }
       }
 
