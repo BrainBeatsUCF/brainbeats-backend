@@ -53,7 +53,7 @@ namespace brainbeats_backend {
             queryString.Append(AddProperty(prop.Name, value));
 
             if (prop.Name.Equals("name")) {
-              queryString.Append(AddProperty("searchName", value.ToLower()));
+              queryString.Append(AddProperty("searchName", value.ToLowerInvariant()));
             }
           }
         }
