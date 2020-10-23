@@ -10,10 +10,6 @@ namespace brainbeats_backend {
         AddProperty("id", vertexId);
     }
 
-    public static string CreateVertex(string vertexType) {
-      return $"g.addV('{vertexType}')" + AddProperty("type", vertexType);
-    }
-
     // Deletes the current vertex or edge
     public static string Delete() {
       return $".drop()";

@@ -11,6 +11,7 @@ using static brainbeats_backend.Utility;
 namespace brainbeats_backend.Controllers {
   public class Sample {
     public string email { get; set; }
+    public string id { get; set; }
     public string name { get; set; }
     public bool isPrivate { get; set; }
     public string attributes { get; set; }
@@ -31,7 +32,7 @@ namespace brainbeats_backend.Controllers {
       } catch (ArgumentException e) {
         return BadRequest($"Malformed or missing authorization token: {e}");
       } catch (Exception e) {
-        return BadRequest($"Unauthenticated error: {e}");
+        return Unauthorized($"Unauthenticated error: {e}");
       }
       
       string queryString;
@@ -41,16 +42,16 @@ namespace brainbeats_backend.Controllers {
           new KeyValuePair<string, string>("OWNED_BY", request.email)
         };
 
-        queryString = await CreateVertexQueryAsync("sample", request, edges);
-      } catch {
-        return BadRequest("Malformed request");
+        queryString = await CreateVertexQueryAsync(request, edges);
+      } catch (Exception e)  {
+        return BadRequest($"Malformed request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest("Something went wrong: {e}");
       }
     }
 
@@ -63,23 +64,32 @@ namespace brainbeats_backend.Controllers {
       } catch (ArgumentException e) {
         return BadRequest($"Malformed or missing authorization token: {e}");
       } catch (Exception e) {
-        return BadRequest($"Unauthenticated error: {e}");
+        return Unauthorized($"Unauthenticated error: {e}");
       }
 
       JObject body = DeserializeRequest(req);
       string queryString;
 
+      // Verify ownership
+      try {
+        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString(), body.GetValue("id").ToString())) {
+          return BadRequest("User is not the owner of this private Sample");
+        }
+      } catch (Exception e) {
+        return BadRequest($"Error validating ownership: {e}");
+      }
+
       try {
         queryString = ReadVertexQuery(body.GetValue("sampleId").ToString());
-      } catch {
-        return BadRequest("Malformed request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -92,7 +102,7 @@ namespace brainbeats_backend.Controllers {
       } catch (ArgumentException e) {
         return BadRequest($"Malformed or missing authorization token: {e}");
       } catch (Exception e) {
-        return BadRequest($"Unauthenticated error: {e}");
+        return Unauthorized($"Unauthenticated error: {e}");
       }
 
       JObject body = DeserializeRequest(req);
@@ -100,15 +110,15 @@ namespace brainbeats_backend.Controllers {
 
       try {
         queryString = SearchVertexQuery("sample", body.GetValue("name").ToString().ToLower());
-      } catch {
-        return BadRequest("Malformed request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -121,7 +131,7 @@ namespace brainbeats_backend.Controllers {
       } catch (ArgumentException e) {
         return BadRequest($"Malformed or missing authorization token: {e}");
       } catch (Exception e) {
-        return BadRequest($"Unauthenticated error: {e}");
+        return Unauthorized($"Unauthenticated error: {e}");
       }
 
       JObject body = DeserializeRequest(req);
@@ -131,8 +141,8 @@ namespace brainbeats_backend.Controllers {
       try {
         queryStringPublic = GetAllPublicVerticesQuery("sample");
         queryStringPrivate = GetAllPrivateVerticesQuery("sample", body.GetValue("email").ToString());
-      } catch {
-        return BadRequest("Malformed Request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed Request: {e}");
       }
 
       try {
@@ -150,8 +160,8 @@ namespace brainbeats_backend.Controllers {
         }
 
         return Ok(resultList);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -164,23 +174,32 @@ namespace brainbeats_backend.Controllers {
       } catch (ArgumentException e) {
         return BadRequest($"Malformed or missing authorization token: {e}");
       } catch (Exception e) {
-        return BadRequest($"Unauthenticated error: {e}");
+        return Unauthorized($"Unauthenticated error: {e}");
       }
 
-      JObject body = DeserializeRequest(req);
+      Sample s = DeserializeRequest(req, new Sample());
       string queryString;
 
+      // Verify ownership
       try {
-        queryString = UpdateVertexQuery("sample", body.GetValue("sampleId").ToString(), body);
-      } catch {
-        return BadRequest("Malformed request");
+        if (!await ValidateVertexOwnershipAsync(s.email, s.id)) {
+          return BadRequest("User is not the owner of this private Sample");
+        }
+      } catch (Exception e) {
+        return BadRequest($"Error validating ownership: {e}");
+      }
+
+      try {
+        queryString = await UpdateVertexQueryAsync(s);
+      } catch (Exception e) {
+        return BadRequest($"Malformed request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -193,23 +212,39 @@ namespace brainbeats_backend.Controllers {
       } catch (ArgumentException e) {
         return BadRequest($"Malformed or missing authorization token: {e}");
       } catch (Exception e) {
-        return BadRequest($"Unauthenticated error: {e}");
+        return Unauthorized($"Unauthenticated error: {e}");
       }
 
       JObject body = DeserializeRequest(req);
       string queryString;
 
+      // Verify ownership
       try {
-        queryString = DeleteVertexQuery(body.GetValue("sampleId").ToString());
-      } catch {
-        return BadRequest("Malformed request");
+        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString(), body.GetValue("id").ToString())) {
+          return BadRequest("User is not the owner of this private Sample");
+        }
+      } catch (Exception e) {
+        return BadRequest($"Error validating ownership: {e}");
+      }
+
+      try {
+        await StorageConnection.Instance.DeleteFileAsync("sample", body.GetValue("id").ToString() + "_image");
+        await StorageConnection.Instance.DeleteFileAsync("sample", body.GetValue("id").ToString() + "_audio");
+      } catch (Exception e) {
+        return BadRequest($"Error deleting associated storage uploads for Sample: {e}");
+      }
+
+      try {
+        queryString = DeleteVertexQuery(body.GetValue("id").ToString());
+      } catch (Exception e) {
+        return BadRequest($"Malformed request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
   }

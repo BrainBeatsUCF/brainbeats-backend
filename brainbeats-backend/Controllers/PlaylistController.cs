@@ -12,10 +12,10 @@ namespace brainbeats_backend.Controllers
 {
   public class Playlist {
     public string email { get; set; }
+    public string id { get; set; }
     public string name { get; set; }
     public IFormFile image { get; set; }
     public bool isPrivate { get; set; }
-    public string beatId { get; set; }
     public string seed { get; set; }
   }
 
@@ -32,7 +32,7 @@ namespace brainbeats_backend.Controllers
       } catch (ArgumentException e) {
         return BadRequest($"Malformed or missing authorization token: {e}");
       } catch (Exception e) {
-        return BadRequest($"Unauthenticated error: {e}");
+        return Unauthorized($"Unauthenticated error: {e}");
       }
       
       string queryString;
@@ -42,20 +42,16 @@ namespace brainbeats_backend.Controllers
           new KeyValuePair<string, string>("OWNED_BY", request.email)
         };
 
-        if (request.beatId != null && request.beatId.Length > 0) {
-          edges.Add(new KeyValuePair<string, string>("CONTAINS", request.beatId));
-        }
-
-        queryString = await CreateVertexQueryAsync("playlist", request, edges);
-      } catch {
-        return BadRequest("Malformed request");
+        queryString = await CreateVertexQueryAsync(request, edges);
+      } catch (Exception e) {
+        return BadRequest($"Malformed request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString.ToString());
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -68,23 +64,32 @@ namespace brainbeats_backend.Controllers
       } catch (ArgumentException e) {
         return BadRequest($"Malformed or missing authorization token: {e}");
       } catch (Exception e) {
-        return BadRequest($"Unauthenticated error: {e}");
+        return Unauthorized($"Unauthenticated error: {e}");
       }
 
       JObject body = DeserializeRequest(req);
       string queryString;
 
+      // Verify ownership
       try {
-        queryString = ReadVertexQuery(body.GetValue("playlistId").ToString());
-      } catch {
-        return BadRequest("Malformed request");
+        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString(), body.GetValue("id").ToString())) {
+          return BadRequest("User is not the owner of this private Playlist");
+        }
+      } catch (Exception e) {
+        return BadRequest($"Error validating ownership: {e}");
+      }
+
+      try {
+        queryString = ReadVertexQuery(body.GetValue("id").ToString());
+      } catch (Exception e) {
+        return BadRequest($"Malformed request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -97,7 +102,7 @@ namespace brainbeats_backend.Controllers
       } catch (ArgumentException e) {
         return BadRequest($"Malformed or missing authorization token: {e}");
       } catch (Exception e) {
-        return BadRequest($"Unauthenticated error: {e}");
+        return Unauthorized($"Unauthenticated error: {e}");
       }
 
       JObject body = DeserializeRequest(req);
@@ -105,15 +110,15 @@ namespace brainbeats_backend.Controllers
 
       try {
         queryString = SearchVertexQuery("playlist", body.GetValue("name").ToString().ToLower());
-      } catch {
-        return BadRequest("Malformed request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -126,23 +131,32 @@ namespace brainbeats_backend.Controllers
       } catch (ArgumentException e) {
         return BadRequest($"Malformed or missing authorization token: {e}");
       } catch (Exception e) {
-        return BadRequest($"Unauthenticated error: {e}");
+        return Unauthorized($"Unauthenticated error: {e}");
       }
 
       JObject body = DeserializeRequest(req);
       string queryString;
 
+      // Verify ownership
       try {
-        queryString = GetOutNeighborsQuery("beat", "CONTAINS", body.GetValue("playlistId").ToString());
-      } catch {
-        return BadRequest("Malformed request");
+        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString(), body.GetValue("id").ToString())) {
+          return BadRequest("User is not the owner of this private Playlist");
+        }
+      } catch (Exception e) {
+        return BadRequest($"Error validating ownership: {e}");
+      }
+
+      try {
+        queryString = GetOutNeighborsQuery("beat", "CONTAINS", body.GetValue("id").ToString());
+      } catch (Exception e) {
+        return BadRequest($"Malformed request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -155,7 +169,7 @@ namespace brainbeats_backend.Controllers
       } catch (ArgumentException e) {
         return BadRequest($"Malformed or missing authorization token: {e}");
       } catch (Exception e) {
-        return BadRequest($"Unauthenticated error: {e}");
+        return Unauthorized($"Unauthenticated error: {e}");
       }
 
       JObject body = DeserializeRequest(req);
@@ -165,8 +179,8 @@ namespace brainbeats_backend.Controllers
       try {
         queryStringPublic = GetAllPublicVerticesQuery("playlist");
         queryStringPrivate = GetAllPrivateVerticesQuery("playlist", body.GetValue("email").ToString());
-      } catch {
-        return BadRequest("Malformed Request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed Request: {e}");
       }
 
       try {
@@ -184,8 +198,8 @@ namespace brainbeats_backend.Controllers
         }
 
         return Ok(resultList);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest("Something went wrong: {e}");
       }
     }
 
@@ -198,23 +212,32 @@ namespace brainbeats_backend.Controllers
       } catch (ArgumentException e) {
         return BadRequest($"Malformed or missing authorization token: {e}");
       } catch (Exception e) {
-        return BadRequest($"Unauthenticated error: {e}");
+        return Unauthorized($"Unauthenticated error: {e}");
       }
 
-      JObject body = DeserializeRequest(req);
+      Playlist p = DeserializeRequest(req, new Playlist());
       string queryString;
 
+      // Verify ownership
       try {
-        queryString = UpdateVertexQuery("playlist", body.GetValue("playlistId").ToString(), body);
-      } catch {
-        return BadRequest("Malformed Request");
+        if (!await ValidateVertexOwnershipAsync(p.email, p.id)) {
+          return BadRequest("User is not the owner of this private Playlist");
+        }
+      } catch (Exception e) {
+        return BadRequest($"Error validating ownership: {e}");
+      }
+
+      try {
+        queryString = await UpdateVertexQueryAsync(p);
+      } catch (Exception e) {
+        return BadRequest($"Malformed Request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString.ToString());
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -227,23 +250,36 @@ namespace brainbeats_backend.Controllers
       } catch (ArgumentException e) {
         return BadRequest($"Malformed or missing authorization token: {e}");
       } catch (Exception e) {
-        return BadRequest($"Unauthenticated error: {e}");
+        return Unauthorized($"Unauthenticated error: {e}");
       }
 
       JObject body = DeserializeRequest(req);
       string queryString;
 
+      // Verify ownership
+      try {
+        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString(), body.GetValue("playlistId").ToString())) {
+          return BadRequest("User is not the owner of this private Playlist");
+        }
+
+        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString(), body.GetValue("beatId").ToString())) {
+          return BadRequest("User is not the owner of this private Beat");
+        }
+      } catch (Exception e) {
+        return BadRequest($"Error validating ownership: {e}");
+      }
+
       try {
         queryString = DeleteOutNeighborQuery("CONTAINS", body.GetValue("playlistId").ToString(), body.GetValue("beatId").ToString());
-      } catch {
-        return BadRequest("Malformed Request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed Request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -256,23 +292,36 @@ namespace brainbeats_backend.Controllers
       } catch (ArgumentException e) {
         return BadRequest($"Malformed or missing authorization token: {e}");
       } catch (Exception e) {
-        return BadRequest($"Unauthenticated error: {e}");
+        return Unauthorized($"Unauthenticated error: {e}");
       }
 
       JObject body = DeserializeRequest(req);
       string queryString;
 
+      // Verify ownership
+      try {
+        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString(), body.GetValue("playlistId").ToString())) {
+          return BadRequest("User is not the owner of this private Playlist");
+        }
+
+        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString(), body.GetValue("beatId").ToString())) {
+          return BadRequest("User is not the owner of this private Beat");
+        }
+      } catch (Exception e) {
+        return BadRequest($"Error validating ownership: {e}");
+      }
+
       try {
         queryString = CreateOutNeighborQuery("CONTAINS", body.GetValue("playlistId").ToString(), body.GetValue("beatId").ToString());
-      } catch {
-        return BadRequest("Malformed request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -285,23 +334,39 @@ namespace brainbeats_backend.Controllers
       } catch (ArgumentException e) {
         return BadRequest($"Malformed or missing authorization token: {e}");
       } catch (Exception e) {
-        return BadRequest($"Unauthenticated error: {e}");
+        return Unauthorized($"Unauthenticated error: {e}");
       }
 
       JObject body = DeserializeRequest(req);
       string queryString;
 
+      // Verify ownership
       try {
-        queryString = DeleteVertexQuery(body.GetValue("playlistId").ToString());
-      } catch {
-        return BadRequest("Malformed request");
+        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString(), body.GetValue("id").ToString())) {
+          return BadRequest("User is not the owner of this private Playlist");
+        }
+      } catch (Exception e) {
+        return BadRequest($"Error validating ownership: {e}");
+      }
+
+      try {
+        await StorageConnection.Instance.DeleteFileAsync("playlist", body.GetValue("id").ToString() + "_image");
+        await StorageConnection.Instance.DeleteFileAsync("playlist", body.GetValue("id").ToString() + "_audio");
+      } catch (Exception e) {
+        return BadRequest($"Error deleting associated storage uploads for Beat: {e}");
+      }
+
+      try {
+        queryString = DeleteVertexQuery(body.GetValue("id").ToString());
+      } catch (Exception e) {
+        return BadRequest($"Malformed request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
   }
