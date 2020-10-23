@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -127,15 +128,15 @@ namespace brainbeats_backend.Controllers {
 
       try {
         queryString = ReadVertexQuery(u.email);
-      } catch {
-        return BadRequest("Malformed request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -156,15 +157,15 @@ namespace brainbeats_backend.Controllers {
 
       try {
         queryString = SearchVertexQuery("user", u.name.ToLowerInvariant());
-      } catch {
-        return BadRequest("Malformed request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -190,15 +191,15 @@ namespace brainbeats_backend.Controllers {
 
       try {
         queryString = await UpdateVertexQueryAsync(u);
-      } catch {
-        return BadRequest("Malformed Request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed Request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -217,17 +218,24 @@ namespace brainbeats_backend.Controllers {
       string queryString;
 
       try {
+        string extension = Path.GetExtension(request.image.FileName);
+
+        // Reject improper file extensions
+        if (!extension.ToLowerInvariant().Equals(".jpg") && !extension.ToLowerInvariant().Equals(".png")) {
+          return BadRequest("Image file extension must be jpg or png");
+        }
+
         string url = await StorageConnection.Instance.UploadFileAsync(request.image, "user", request.email + "_image");
         queryString = GetVertex(request.email) + AddProperty("image", url);
-      } catch {
-        return BadRequest("Malformed Request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed Request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -248,15 +256,15 @@ namespace brainbeats_backend.Controllers {
       try {
         await StorageConnection.Instance.DeleteFileAsync("user", request.email + "_image");
         queryString = GetVertex(request.email) + AddProperty("image", defaultProfilePicture);
-      } catch {
-        return BadRequest("Malformed Request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed Request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -283,15 +291,15 @@ namespace brainbeats_backend.Controllers {
 
       try {
         queryString = DeleteVertexQuery(body.GetValue("email").ToString());
-      } catch {
-        return BadRequest("Malformed request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -312,15 +320,15 @@ namespace brainbeats_backend.Controllers {
 
       try {
         queryString = GetOutNeighborsQuery("beat", "LIKES", body.GetValue("email").ToString());
-      } catch {
-        return BadRequest("Malformed Request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed Request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -341,15 +349,15 @@ namespace brainbeats_backend.Controllers {
 
       try {
         queryString = GetOutNeighborsQuery("playlist", "LIKES", body.GetValue("email").ToString());
-      } catch {
-        return BadRequest("Malformed Request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed Request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -370,15 +378,15 @@ namespace brainbeats_backend.Controllers {
 
       try {
         queryString = GetOutNeighborsQuery("sample", "LIKES", body.GetValue("email").ToString());
-      } catch {
-        return BadRequest("Malformed Request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed Request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -399,15 +407,15 @@ namespace brainbeats_backend.Controllers {
 
       try {
         queryString = GetInNeighborsQuery("beat", "OWNED_BY", body.GetValue("email").ToString());
-      } catch {
-        return BadRequest("Malformed Request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed Request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -428,15 +436,15 @@ namespace brainbeats_backend.Controllers {
 
       try {
         queryString = GetInNeighborsQuery("playlist", "OWNED_BY", body.GetValue("email").ToString());
-      } catch {
-        return BadRequest("Malformed Request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed Request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -457,15 +465,15 @@ namespace brainbeats_backend.Controllers {
 
       try {
         queryString = GetInNeighborsQuery("sample", "OWNED_BY", body.GetValue("email").ToString());
-      } catch {
-        return BadRequest("Malformed Request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed Request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -486,15 +494,15 @@ namespace brainbeats_backend.Controllers {
 
       try {
         queryString = CreateOutNeighborQuery("LIKES", body.GetValue("email").ToString(), body.GetValue("vertexId").ToString());
-      } catch {
-        return BadRequest("Malformed request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -515,15 +523,15 @@ namespace brainbeats_backend.Controllers {
 
       try {
         queryString = DeleteOutNeighborQuery("LIKES", body.GetValue("email").ToString(), body.GetValue("vertexId").ToString());
-      } catch {
-        return BadRequest("Malformed request");
+      } catch (Exception e) {
+        return BadRequest("Malformed request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest("Something went wrong: {e}");
       }
     }
 
@@ -536,15 +544,15 @@ namespace brainbeats_backend.Controllers {
 
       try {
         queryString = GetOutNeighborsQuery("user", "OWNED_BY", body.GetValue("vertexId").ToString());
-      } catch {
-        return BadRequest("Malformed request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
   }
