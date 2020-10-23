@@ -28,7 +28,7 @@ namespace brainbeats_backend.Controllers {
   [Route("api/[controller]")]
   [ApiController]
   public class UserController : ControllerBase {
-    private string defaultProfilePicture = "DEFAULT_PROFILE_PLACEHOLDER";
+    private readonly string defaultProfilePicture = "DEFAULT_PROFILE_PLACEHOLDER";
 
     [HttpPost]
     [Route("login_user")]
@@ -155,7 +155,7 @@ namespace brainbeats_backend.Controllers {
       string queryString;
 
       try {
-        queryString = SearchVertexQuery("user", u.name.ToLower());
+        queryString = SearchVertexQuery("user", u.name.ToLowerInvariant());
       } catch {
         return BadRequest("Malformed request");
       }

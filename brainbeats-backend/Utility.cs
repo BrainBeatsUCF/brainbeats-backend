@@ -26,7 +26,6 @@ namespace brainbeats_backend {
       foreach (var itemVertex in result) {
         foreach (var field in itemVertex["properties"]["isPrivate"]) {
           if (field["value"].ToString().ToLowerInvariant().Equals("true")) {
-            Console.WriteLine("VERTEX IS PRIVATE");
             queryString = GetOutNeighborsQuery("user", "OWNED_BY", vertexId);
             result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
 
@@ -35,8 +34,6 @@ namespace brainbeats_backend {
                 return false;
               }
             }
-          } else {
-            Console.WriteLine("VERTEX IS PUBLIC");
           }
         }
       }

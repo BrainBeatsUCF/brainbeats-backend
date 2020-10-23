@@ -19,10 +19,10 @@ namespace brainbeats_backend {
     public static async Task<string> CreateVertexQueryAsync(object obj) {
       return obj switch
       {
-        Beat _ => await CreateVertexQueryAsync("beat", Guid.NewGuid().ToString(), obj, null),
-        Playlist _ => await CreateVertexQueryAsync("playlist", Guid.NewGuid().ToString(), obj, null),
-        Sample _ => await CreateVertexQueryAsync("sample", Guid.NewGuid().ToString(), obj, null),
-        User u => await CreateVertexQueryAsync("user", u.email, obj, null),
+        Beat _ => await CreateVertexQueryAsync("beat", Guid.NewGuid().ToString(), obj, null).ConfigureAwait(false),
+        Playlist _ => await CreateVertexQueryAsync("playlist", Guid.NewGuid().ToString(), obj, null).ConfigureAwait(false),
+        Sample _ => await CreateVertexQueryAsync("sample", Guid.NewGuid().ToString(), obj, null).ConfigureAwait(false),
+        User u => await CreateVertexQueryAsync("user", u.email, obj, null).ConfigureAwait(false),
         _ => "",
       };
     }
@@ -30,10 +30,10 @@ namespace brainbeats_backend {
     public static async Task<string> CreateVertexQueryAsync(object obj, List<KeyValuePair<string, string>> edges) {
       return obj switch
       {
-        Beat _ => await CreateVertexQueryAsync("beat", Guid.NewGuid().ToString(), obj, edges),
-        Playlist _ => await CreateVertexQueryAsync("playlist", Guid.NewGuid().ToString(), obj, edges),
-        Sample _ => await CreateVertexQueryAsync("sample", Guid.NewGuid().ToString(), obj, edges),
-        User u => await CreateVertexQueryAsync("user", u.email, obj, edges),
+        Beat _ => await CreateVertexQueryAsync("beat", Guid.NewGuid().ToString(), obj, edges).ConfigureAwait(false),
+        Playlist _ => await CreateVertexQueryAsync("playlist", Guid.NewGuid().ToString(), obj, edges).ConfigureAwait(false),
+        Sample _ => await CreateVertexQueryAsync("sample", Guid.NewGuid().ToString(), obj, edges).ConfigureAwait(false),
+        User u => await CreateVertexQueryAsync("user", u.email, obj, edges).ConfigureAwait(false),
         _ => "",
       };
     }
@@ -104,10 +104,10 @@ namespace brainbeats_backend {
     public static async Task<string> UpdateVertexQueryAsync(object obj) {
       return obj switch
       {
-        Beat b => await UpdateVertexQueryAsync("beat", b.id, obj),
-        Playlist p => await UpdateVertexQueryAsync("playlist", p.id, obj),
-        Sample s => await UpdateVertexQueryAsync("sample", s.id, obj),
-        User u => await UpdateVertexQueryAsync("user", u.email, obj),
+        Beat b => await UpdateVertexQueryAsync("beat", b.id, obj).ConfigureAwait(false),
+        Playlist p => await UpdateVertexQueryAsync("playlist", p.id, obj).ConfigureAwait(false),
+        Sample s => await UpdateVertexQueryAsync("sample", s.id, obj).ConfigureAwait(false),
+        User u => await UpdateVertexQueryAsync("user", u.email, obj).ConfigureAwait(false),
         _ => "",
       };
     }
