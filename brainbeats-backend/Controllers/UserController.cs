@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json.Linq;
+using static brainbeats_backend.QueryBuilder;
 using static brainbeats_backend.QueryStrings;
 using static brainbeats_backend.Utility;
 
@@ -15,11 +18,19 @@ namespace brainbeats_backend.Controllers {
     public string firstName { get; set; }
     public string lastName { get; set; }
     public string name { get; set; }
+    public string seed { get; set; }
+  }
+
+  public class UserProfileSettings {
+    public string email { get; set; }
+    public IFormFile image { get; set; }
   }
 
   [Route("api/[controller]")]
   [ApiController]
   public class UserController : ControllerBase {
+    private readonly string defaultProfilePicture = "DEFAULT_PROFILE_PLACEHOLDER";
+
     [HttpPost]
     [Route("login_user")]
     public async Task<IActionResult> LoginUser(dynamic req) {
@@ -36,6 +47,11 @@ namespace brainbeats_backend.Controllers {
       // If the user exists in Azure B2C but doesn't exist in the database, create the user's profile
       // First, get the user's claims from the generated JWT
       JObject tokenObject = DeserializeRequest(res);
+
+      if (tokenObject.ContainsKey("error")) {
+        return Unauthorized(tokenObject.GetValue("error_description").ToString());
+      }
+
       JwtSecurityToken jwt = AuthConnection.Instance.DecodeToken(tokenObject.GetValue("access_token").ToString());
 
       Dictionary<string, string> claimsDictionary = new Dictionary<string, string>();
@@ -57,7 +73,6 @@ namespace brainbeats_backend.Controllers {
         JObject user = new JObject(
           new JProperty("firstName", claimsDictionary["given_name"]),
           new JProperty("lastName", claimsDictionary["family_name"]),
-          new JProperty("name", claimsDictionary["given_name"] + ' ' + claimsDictionary["family_name"]),
           new JProperty("email", claimsDictionary["emails"]));
 
         IActionResult createUserResult = await CreateUser(user.ToString()).ConfigureAwait(false);
@@ -74,14 +89,16 @@ namespace brainbeats_backend.Controllers {
       }
     }
 
-    [HttpPost]
-    [Route("create_user")]
+    // Not a publicly accessible API
     public async Task<IActionResult> CreateUser(dynamic req) {
-      JObject body = DeserializeRequest(req);
+      User u = DeserializeRequest(req, new User());
       string queryString;
 
+      // User's name field is populated through concatenating the first and last names
+      u.name = $"{u.firstName} {u.lastName}";
+
       try {
-        queryString = CreateVertexQuery("user", body.GetValue("email").ToString(), body);
+        queryString = await CreateVertexQueryAsync(u) + AddProperty("image", defaultProfilePicture);
       } catch {
         return BadRequest("Malformed request");
       }
@@ -103,23 +120,23 @@ namespace brainbeats_backend.Controllers {
       } catch (ArgumentException e) {
         return BadRequest($"Malformed or missing authorization token: {e}");
       } catch (Exception e) {
-        return BadRequest($"Unauthenticated error: {e}");
+        return Unauthorized($"Unauthenticated error: {e}");
       }
 
-      JObject body = DeserializeRequest(req);
+      User u = DeserializeRequest(req, new User());
       string queryString;
 
       try {
-        queryString = ReadVertexQuery(body.GetValue("email").ToString());
-      } catch {
-        return BadRequest("Malformed request");
+        queryString = ReadVertexQuery(u.email);
+      } catch (Exception e) {
+        return BadRequest($"Malformed request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -132,23 +149,23 @@ namespace brainbeats_backend.Controllers {
       } catch (ArgumentException e) {
         return BadRequest($"Malformed or missing authorization token: {e}");
       } catch (Exception e) {
-        return BadRequest($"Unauthenticated error: {e}");
+        return Unauthorized($"Unauthenticated error: {e}");
       }
 
-      JObject body = DeserializeRequest(req);
+      User u = DeserializeRequest(req, new User());
       string queryString;
 
       try {
-        queryString = SearchVertexQuery("user", body.GetValue("name").ToString().ToLower());
-      } catch {
-        return BadRequest("Malformed request");
+        queryString = SearchVertexQuery("user", u.name.ToLowerInvariant());
+      } catch (Exception e) {
+        return BadRequest($"Malformed request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -161,23 +178,93 @@ namespace brainbeats_backend.Controllers {
       } catch (ArgumentException e) {
         return BadRequest($"Malformed or missing authorization token: {e}");
       } catch (Exception e) {
-        return BadRequest($"Unauthenticated error: {e}");
+        return Unauthorized($"Unauthenticated error: {e}");
       }
 
-      JObject body = DeserializeRequest(req);
+      User u = DeserializeRequest(req, new User());
       string queryString;
 
+      // User's name field is populated through concatenating the first and last names
+      // Important: This means that the firstName and lastName fields are required for all requests, even
+      // if the user only wants to update the first name by itself
+      u.name = $"{u.firstName} {u.lastName}";
+
       try {
-        queryString = UpdateVertexQuery("user", body.GetValue("email").ToString(), body);
-      } catch {
-        return BadRequest("Malformed Request");
+        queryString = await UpdateVertexQueryAsync(u);
+      } catch (Exception e) {
+        return BadRequest($"Malformed Request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
+      }
+    }
+
+    [HttpPost]
+    [Route("upload_profile_picture")]
+    public async Task<IActionResult> UpdateProfilePicture([FromForm] UserProfileSettings request) {
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return Unauthorized($"Unauthenticated error: {e}");
+      }
+
+      string queryString;
+
+      try {
+        string extension = Path.GetExtension(request.image.FileName);
+
+        // Reject improper file extensions
+        if (!extension.ToLowerInvariant().Equals(".jpg") && !extension.ToLowerInvariant().Equals(".png")) {
+          return BadRequest("Image file extension must be jpg or png");
+        }
+
+        string url = await StorageConnection.Instance.UploadFileAsync(request.image, "user", request.email + "_image");
+        queryString = GetVertex(request.email) + AddProperty("image", url);
+      } catch (Exception e) {
+        return BadRequest($"Malformed Request: {e}");
+      }
+
+      try {
+        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
+        return Ok(result);
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
+      }
+    }
+
+    [HttpPost]
+    [Route("delete_profile_picture")]
+    public async Task<IActionResult> DeleteProfilePicture([FromForm] UserProfileSettings request) {
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return Unauthorized($"Unauthenticated error: {e}");
+      }
+
+      string queryString;
+
+      try {
+        await StorageConnection.Instance.DeleteFileAsync("user", request.email + "_image");
+        queryString = GetVertex(request.email) + AddProperty("image", defaultProfilePicture);
+      } catch (Exception e) {
+        return BadRequest($"Malformed Request: {e}");
+      }
+
+      try {
+        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
+        return Ok(result);
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -190,23 +277,29 @@ namespace brainbeats_backend.Controllers {
       } catch (ArgumentException e) {
         return BadRequest($"Malformed or missing authorization token: {e}");
       } catch (Exception e) {
-        return BadRequest($"Unauthenticated error: {e}");
+        return Unauthorized($"Unauthenticated error: {e}");
       }
 
       JObject body = DeserializeRequest(req);
       string queryString;
 
       try {
+        await StorageConnection.Instance.DeleteFileAsync("user", body.GetValue("email").ToString() + "_image");
+      } catch (Exception e) {
+        return BadRequest($"Error deleting associated storage uploads for User: {e}");
+      }
+
+      try {
         queryString = DeleteVertexQuery(body.GetValue("email").ToString());
-      } catch {
-        return BadRequest("Malformed request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -219,7 +312,7 @@ namespace brainbeats_backend.Controllers {
       } catch (ArgumentException e) {
         return BadRequest($"Malformed or missing authorization token: {e}");
       } catch (Exception e) {
-        return BadRequest($"Unauthenticated error: {e}");
+        return Unauthorized($"Unauthenticated error: {e}");
       }
 
       JObject body = DeserializeRequest(req);
@@ -227,15 +320,15 @@ namespace brainbeats_backend.Controllers {
 
       try {
         queryString = GetOutNeighborsQuery("beat", "LIKES", body.GetValue("email").ToString());
-      } catch {
-        return BadRequest("Malformed Request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed Request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -248,7 +341,7 @@ namespace brainbeats_backend.Controllers {
       } catch (ArgumentException e) {
         return BadRequest($"Malformed or missing authorization token: {e}");
       } catch (Exception e) {
-        return BadRequest($"Unauthenticated error: {e}");
+        return Unauthorized($"Unauthenticated error: {e}");
       }
 
       JObject body = DeserializeRequest(req);
@@ -256,15 +349,15 @@ namespace brainbeats_backend.Controllers {
 
       try {
         queryString = GetOutNeighborsQuery("playlist", "LIKES", body.GetValue("email").ToString());
-      } catch {
-        return BadRequest("Malformed Request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed Request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -277,7 +370,7 @@ namespace brainbeats_backend.Controllers {
       } catch (ArgumentException e) {
         return BadRequest($"Malformed or missing authorization token: {e}");
       } catch (Exception e) {
-        return BadRequest($"Unauthenticated error: {e}");
+        return Unauthorized($"Unauthenticated error: {e}");
       }
 
       JObject body = DeserializeRequest(req);
@@ -285,15 +378,15 @@ namespace brainbeats_backend.Controllers {
 
       try {
         queryString = GetOutNeighborsQuery("sample", "LIKES", body.GetValue("email").ToString());
-      } catch {
-        return BadRequest("Malformed Request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed Request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -306,7 +399,7 @@ namespace brainbeats_backend.Controllers {
       } catch (ArgumentException e) {
         return BadRequest($"Malformed or missing authorization token: {e}");
       } catch (Exception e) {
-        return BadRequest($"Unauthenticated error: {e}");
+        return Unauthorized($"Unauthenticated error: {e}");
       }
 
       JObject body = DeserializeRequest(req);
@@ -314,15 +407,15 @@ namespace brainbeats_backend.Controllers {
 
       try {
         queryString = GetInNeighborsQuery("beat", "OWNED_BY", body.GetValue("email").ToString());
-      } catch {
-        return BadRequest("Malformed Request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed Request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -335,7 +428,7 @@ namespace brainbeats_backend.Controllers {
       } catch (ArgumentException e) {
         return BadRequest($"Malformed or missing authorization token: {e}");
       } catch (Exception e) {
-        return BadRequest($"Unauthenticated error: {e}");
+        return Unauthorized($"Unauthenticated error: {e}");
       }
 
       JObject body = DeserializeRequest(req);
@@ -343,15 +436,15 @@ namespace brainbeats_backend.Controllers {
 
       try {
         queryString = GetInNeighborsQuery("playlist", "OWNED_BY", body.GetValue("email").ToString());
-      } catch {
-        return BadRequest("Malformed Request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed Request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -364,7 +457,7 @@ namespace brainbeats_backend.Controllers {
       } catch (ArgumentException e) {
         return BadRequest($"Malformed or missing authorization token: {e}");
       } catch (Exception e) {
-        return BadRequest($"Unauthenticated error: {e}");
+        return Unauthorized($"Unauthenticated error: {e}");
       }
 
       JObject body = DeserializeRequest(req);
@@ -372,15 +465,15 @@ namespace brainbeats_backend.Controllers {
 
       try {
         queryString = GetInNeighborsQuery("sample", "OWNED_BY", body.GetValue("email").ToString());
-      } catch {
-        return BadRequest("Malformed Request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed Request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -393,7 +486,7 @@ namespace brainbeats_backend.Controllers {
       } catch (ArgumentException e) {
         return BadRequest($"Malformed or missing authorization token: {e}");
       } catch (Exception e) {
-        return BadRequest($"Unauthenticated error: {e}");
+        return Unauthorized($"Unauthenticated error: {e}");
       }
 
       JObject body = DeserializeRequest(req);
@@ -401,15 +494,15 @@ namespace brainbeats_backend.Controllers {
 
       try {
         queryString = CreateOutNeighborQuery("LIKES", body.GetValue("email").ToString(), body.GetValue("vertexId").ToString());
-      } catch {
-        return BadRequest("Malformed request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -422,7 +515,7 @@ namespace brainbeats_backend.Controllers {
       } catch (ArgumentException e) {
         return BadRequest($"Malformed or missing authorization token: {e}");
       } catch (Exception e) {
-        return BadRequest($"Unauthenticated error: {e}");
+        return Unauthorized($"Unauthenticated error: {e}");
       }
 
       JObject body = DeserializeRequest(req);
@@ -430,15 +523,15 @@ namespace brainbeats_backend.Controllers {
 
       try {
         queryString = DeleteOutNeighborQuery("LIKES", body.GetValue("email").ToString(), body.GetValue("vertexId").ToString());
-      } catch {
-        return BadRequest("Malformed request");
+      } catch (Exception e) {
+        return BadRequest("Malformed request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest("Something went wrong: {e}");
       }
     }
 
@@ -451,15 +544,15 @@ namespace brainbeats_backend.Controllers {
 
       try {
         queryString = GetOutNeighborsQuery("user", "OWNED_BY", body.GetValue("vertexId").ToString());
-      } catch {
-        return BadRequest("Malformed request");
+      } catch (Exception e) {
+        return BadRequest($"Malformed request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
-      } catch {
-        return BadRequest("Something went wrong");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
       }
     }
   }
