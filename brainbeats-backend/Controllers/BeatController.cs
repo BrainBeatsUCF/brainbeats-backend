@@ -169,7 +169,7 @@ namespace brainbeats_backend.Controllers {
 
     [HttpPost]
     [Route("update_beat")]
-    public async Task<IActionResult> UpdateBeat(dynamic req) {
+    public async Task<IActionResult> UpdateBeat([FromForm] Beat b) {
       try {
         HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
         AuthConnection.Instance.ValidateToken(authorizationToken);
@@ -179,7 +179,6 @@ namespace brainbeats_backend.Controllers {
         return Unauthorized($"Unauthenticated error: {e}");
       }
 
-      Beat b = DeserializeRequest(req, new Beat());
       string queryString;
 
       // Verify ownership

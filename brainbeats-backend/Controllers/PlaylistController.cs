@@ -205,7 +205,7 @@ namespace brainbeats_backend.Controllers
 
     [HttpPost]
     [Route("update_playlist")]
-    public async Task<IActionResult> UpdatePlaylist(dynamic req) {
+    public async Task<IActionResult> UpdatePlaylist([FromForm] Playlist p) {
       try {
         HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
         AuthConnection.Instance.ValidateToken(authorizationToken);
@@ -215,7 +215,6 @@ namespace brainbeats_backend.Controllers
         return Unauthorized($"Unauthenticated error: {e}");
       }
 
-      Playlist p = DeserializeRequest(req, new Playlist());
       string queryString;
 
       // Verify ownership

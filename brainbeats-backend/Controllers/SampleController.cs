@@ -16,7 +16,7 @@ namespace brainbeats_backend.Controllers {
     public bool isPrivate { get; set; }
     public string attributes { get; set; }
     public IFormFile audio { get; set; }
-    public IFormFile image { get; set; }
+    public string image { get; set; }
     public string seed { get; set; }
   }
 
@@ -51,7 +51,7 @@ namespace brainbeats_backend.Controllers {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
       } catch (Exception e) {
-        return BadRequest("Something went wrong: {e}");
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -80,7 +80,7 @@ namespace brainbeats_backend.Controllers {
       }
 
       try {
-        queryString = ReadVertexQuery(body.GetValue("sampleId").ToString());
+        queryString = ReadVertexQuery(body.GetValue("id").ToString());
       } catch (Exception e) {
         return BadRequest($"Malformed request: {e}");
       }
