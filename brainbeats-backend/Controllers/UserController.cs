@@ -38,8 +38,8 @@ namespace brainbeats_backend.Controllers {
 
       string res;
       try {
-         res = await AuthConnection.Instance.LoginUser(body.GetValue("email").ToString(), 
-          body.GetValue("password").ToString());
+        res = await AuthConnection.Instance.LoginUser(body.GetValue("email").ToString(),
+         body.GetValue("password").ToString());
       } catch (Exception e) {
         return BadRequest($"Something went wrong: {e}");
       }
@@ -87,6 +87,21 @@ namespace brainbeats_backend.Controllers {
       } catch (Exception e) {
         return BadRequest($"Unknown error signing user for the first time: {e}");
       }
+    }
+
+    [HttpPost]
+    [Route("refresh_token")]
+    public async Task<IActionResult> RefreshToken(dynamic req) {
+      JObject body = DeserializeRequest(req);
+
+      string res;
+      try {
+        res = await AuthConnection.Instance.RefreshToken(body.GetValue("refreshToken").ToString());
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
+      }
+
+      return Ok(res);
     }
 
     // Not a publicly accessible API
