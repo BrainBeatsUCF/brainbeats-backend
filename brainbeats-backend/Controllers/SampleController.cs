@@ -72,7 +72,7 @@ namespace brainbeats_backend.Controllers {
 
       // Verify ownership
       try {
-        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString(), body.GetValue("id").ToString())) {
+        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("id").ToString().ToLowerInvariant())) {
           return BadRequest("User is not the owner of this private Sample");
         }
       } catch (Exception e) {
@@ -80,7 +80,7 @@ namespace brainbeats_backend.Controllers {
       }
 
       try {
-        queryString = ReadVertexQuery(body.GetValue("id").ToString());
+        queryString = ReadVertexQuery(body.GetValue("id").ToString().ToLowerInvariant());
       } catch (Exception e) {
         return BadRequest($"Malformed request: {e}");
       }
@@ -109,7 +109,65 @@ namespace brainbeats_backend.Controllers {
       string queryString;
 
       try {
-        queryString = SearchVertexQuery("sample", body.GetValue("name").ToString().ToLower());
+        queryString = SearchVertexQuery("sample", body.GetValue("name").ToString().ToLowerInvariant());
+      } catch (Exception e) {
+        return BadRequest($"Malformed request: {e}");
+      }
+
+      try {
+        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
+        return Ok(result);
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
+      }
+    }
+
+    [HttpPost]
+    [Route("search_public_samples")]
+    public async Task<IActionResult> SearchPublicSamples(dynamic req) {
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return Unauthorized($"Unauthenticated error: {e}");
+      }
+
+      JObject body = DeserializeRequest(req);
+      string queryString;
+
+      try {
+        queryString = SearchPublicVertexQuery("sample", body.GetValue("name").ToString().ToLowerInvariant());
+      } catch (Exception e) {
+        return BadRequest($"Malformed request: {e}");
+      }
+
+      try {
+        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
+        return Ok(result);
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
+      }
+    }
+
+    [HttpPost]
+    [Route("search_owned_samples")]
+    public async Task<IActionResult> SearchOwnedSamples(dynamic req) {
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return Unauthorized($"Unauthenticated error: {e}");
+      }
+
+      JObject body = DeserializeRequest(req);
+      string queryString;
+
+      try {
+        queryString = SearchOwnedVertexQuery("sample", body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("name").ToString().ToLowerInvariant());
       } catch (Exception e) {
         return BadRequest($"Malformed request: {e}");
       }
@@ -140,7 +198,7 @@ namespace brainbeats_backend.Controllers {
 
       try {
         queryStringPublic = GetAllPublicVerticesQuery("sample");
-        queryStringPrivate = GetAllPrivateVerticesQuery("sample", body.GetValue("email").ToString());
+        queryStringPrivate = GetAllPrivateVerticesQuery("sample", body.GetValue("email").ToString().ToLowerInvariant());
       } catch (Exception e) {
         return BadRequest($"Malformed Request: {e}");
       }
@@ -220,7 +278,7 @@ namespace brainbeats_backend.Controllers {
 
       // Verify ownership
       try {
-        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString(), body.GetValue("id").ToString())) {
+        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("id").ToString().ToLowerInvariant())) {
           return BadRequest("User is not the owner of this private Sample");
         }
       } catch (Exception e) {
@@ -228,14 +286,15 @@ namespace brainbeats_backend.Controllers {
       }
 
       try {
-        await StorageConnection.Instance.DeleteFileAsync("sample", body.GetValue("id").ToString() + "_image");
-        await StorageConnection.Instance.DeleteFileAsync("sample", body.GetValue("id").ToString() + "_audio");
+        // Delete the wav or mp3 audio associated with this Sample
+        await StorageConnection.Instance.DeleteFileAsync("sample", body.GetValue("id").ToString() + "_audio.wav");
+        await StorageConnection.Instance.DeleteFileAsync("sample", body.GetValue("id").ToString() + "_audio.mp3");
       } catch (Exception e) {
         return BadRequest($"Error deleting associated storage uploads for Sample: {e}");
       }
 
       try {
-        queryString = DeleteVertexQuery(body.GetValue("id").ToString());
+        queryString = DeleteVertexQuery(body.GetValue("id").ToString().ToLowerInvariant());
       } catch (Exception e) {
         return BadRequest($"Malformed request: {e}");
       }

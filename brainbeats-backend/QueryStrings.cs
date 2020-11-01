@@ -162,6 +162,16 @@ namespace brainbeats_backend {
       return GetAllVertices(vertexType) + HasProperty("searchName", searchWord);
     }
 
+    // Searches the specified public vertex
+    public static string SearchPublicVertexQuery(string vertexType, string searchWord) {
+      return GetAllPublicVerticesQuery(vertexType) + HasProperty("searchName", searchWord);
+    }
+
+    // Searches the specified owned vertex
+    public static string SearchOwnedVertexQuery(string vertexType, string email, string searchWord) {
+      return GetAllOwnedVerticesQuery(vertexType, email) + HasProperty("searchName", searchWord);
+    }
+
     // Deletes the specified vertex
     public static string DeleteVertexQuery(string vertexId) {
       return GetVertex(vertexId) + Delete();
