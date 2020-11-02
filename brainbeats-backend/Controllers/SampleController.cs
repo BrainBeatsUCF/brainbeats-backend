@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -87,7 +88,9 @@ namespace brainbeats_backend.Controllers {
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
-        return Ok(result);
+        List<dynamic> resultList = await PopulateVertexOwners(result);
+
+        return Ok(resultList);
       } catch (Exception e) {
         return BadRequest($"Something went wrong: {e}");
       }
@@ -116,7 +119,9 @@ namespace brainbeats_backend.Controllers {
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
-        return Ok(result);
+        List<dynamic> resultList = await PopulateVertexOwners(result);
+
+        return Ok(resultList);
       } catch (Exception e) {
         return BadRequest($"Something went wrong: {e}");
       }
@@ -145,7 +150,9 @@ namespace brainbeats_backend.Controllers {
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
-        return Ok(result);
+        List<dynamic> resultList = await PopulateVertexOwners(result);
+
+        return Ok(resultList);
       } catch (Exception e) {
         return BadRequest($"Something went wrong: {e}");
       }
@@ -174,7 +181,9 @@ namespace brainbeats_backend.Controllers {
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
-        return Ok(result);
+        List<dynamic> resultList = await PopulateVertexOwners(result);
+
+        return Ok(resultList);
       } catch (Exception e) {
         return BadRequest($"Something went wrong: {e}");
       }
@@ -207,17 +216,10 @@ namespace brainbeats_backend.Controllers {
         var resultsPublic = await DatabaseConnection.Instance.ExecuteQuery(queryStringPublic);
         var resultsPrivate = await DatabaseConnection.Instance.ExecuteQuery(queryStringPrivate);
 
-        List<dynamic> resultList = new List<dynamic>();
+        List<dynamic> resultListPublic = await PopulateVertexOwners(resultsPublic);
+        List<dynamic> resultListPrivate = await PopulateVertexOwners(resultsPrivate);
 
-        foreach (var item in resultsPublic) {
-          resultList.Add(item);
-        }
-
-        foreach (var item in resultsPrivate) {
-          resultList.Add(item);
-        }
-
-        return Ok(resultList);
+        return Ok(resultListPublic.Concat(resultListPrivate));
       } catch (Exception e) {
         return BadRequest($"Something went wrong: {e}");
       }

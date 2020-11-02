@@ -127,7 +127,7 @@ namespace brainbeats_backend.Controllers {
     }
 
     [HttpPost]
-    [Route("read_user")]
+    [Route("read_user")] 
     public async Task<IActionResult> ReadUser(dynamic req) {
       try {
         HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
@@ -277,6 +277,35 @@ namespace brainbeats_backend.Controllers {
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
+        return Ok(result);
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
+      }
+    }
+
+    [HttpGet]
+    [Route("get_all_users")]
+    public async Task<IActionResult> GetAllUsers() {
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return Unauthorized($"Unauthenticated error: {e}");
+      }
+
+      string queryString;
+
+      try {
+        queryString = GetAllVerticesQuery("user");
+      } catch (Exception e) {
+        return BadRequest($"Malformed Request: {e}");
+      }
+
+      try {
+        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
+
         return Ok(result);
       } catch (Exception e) {
         return BadRequest($"Something went wrong: {e}");
@@ -590,6 +619,35 @@ namespace brainbeats_backend.Controllers {
 
       try {
         queryString = GetOutNeighborsQuery("user", "OWNED_BY", body.GetValue("vertexId").ToString().ToLowerInvariant());
+      } catch (Exception e) {
+        return BadRequest($"Malformed request: {e}");
+      }
+
+      try {
+        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
+        return Ok(result);
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
+      }
+    }
+
+    [HttpPost]
+    [Route("recommend_vertex")]
+    public async Task<IActionResult> RecommendVertex(dynamic req) {
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return Unauthorized($"Unauthenticated error: {e}");
+      }
+
+      JObject body = DeserializeRequest(req);
+      string queryString;
+
+      try {
+        queryString = CreateOutNeighborQuery("RECOMMENDED", body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("vertexId").ToString().ToLowerInvariant());
       } catch (Exception e) {
         return BadRequest($"Malformed request: {e}");
       }

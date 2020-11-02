@@ -197,6 +197,10 @@ namespace brainbeats_backend {
       return GetAllOwnedVerticesQuery(vertexType, email) + HasProperty("isPrivate", "True");
     }
 
+    public static string GetAllVerticesQuery(string vertexType) {
+      return GetAllVertices(vertexType);
+    }
+
     // Gets all public vertices of a specific type
     public static string GetAllPublicVerticesQuery(string vertexType) {
       return GetAllVertices(vertexType) + HasProperty("isPrivate", "False");

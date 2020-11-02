@@ -41,6 +41,24 @@ namespace brainbeats_backend {
       return true;
     }
 
+    public static async Task<List<dynamic>> PopulateVertexOwners(Gremlin.Net.Driver.ResultSet<dynamic> vertices) {
+      List<dynamic> resultList = new List<dynamic>();
+
+      foreach (var searchVertex in vertices) {
+        string queryString = GetOutNeighborsQuery("user", "OWNED_BY", searchVertex["id"].ToString().ToLowerInvariant());
+        var owners = await DatabaseConnection.Instance.ExecuteQuery(queryString);
+
+        foreach (var ownerVertex in owners) {
+          searchVertex["owner"] = ownerVertex["id"];
+          resultList.Add(searchVertex);
+
+          break;
+        }
+      }
+
+      return resultList;
+    }
+
     // Gets the current UNIX time
     public static string GetCurrentTime() {
       int unixTimestamp = (int)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
