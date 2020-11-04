@@ -29,7 +29,7 @@ namespace brainbeats_backend.Controllers {
   [Route("api/[controller]")]
   [ApiController]
   public class UserController : ControllerBase {
-    private readonly string defaultProfilePicture = "DEFAULT_PROFILE_PLACEHOLDER";
+    private readonly string defaultProfilePicture = $"{StorageConnection.Instance.StorageEndpoint}/static/profile_picture.png";
 
     [HttpPost]
     [Route("login_user")]

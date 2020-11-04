@@ -13,6 +13,7 @@ namespace brainbeats_backend.Controllers
 {
   public class Playlist {
     public string email { get; set; }
+    public string owner { get; set; }
     public string id { get; set; }
     public string name { get; set; }
     public IFormFile image { get; set; }
@@ -40,8 +41,10 @@ namespace brainbeats_backend.Controllers
 
       try {
         List<KeyValuePair<string, string>> edges = new List<KeyValuePair<string, string>> {
-          new KeyValuePair<string, string>("OWNED_BY", request.email)
+          new KeyValuePair<string, string>("OWNED_BY", request.email.ToLowerInvariant())
         };
+
+        request.owner = request.email.ToLowerInvariant();
 
         queryString = await CreateVertexQueryAsync(request, edges);
       } catch (Exception e) {
@@ -49,7 +52,7 @@ namespace brainbeats_backend.Controllers
       }
 
       try {
-        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString.ToString().ToLowerInvariant());
+        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
       } catch (Exception e) {
         return BadRequest($"Something went wrong: {e}");
@@ -88,9 +91,7 @@ namespace brainbeats_backend.Controllers
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
-        List<dynamic> resultList = await PopulateVertexOwners(result);
-
-        return Ok(resultList);
+        return Ok(result);
       } catch (Exception e) {
         return BadRequest($"Something went wrong: {e}");
       }
@@ -119,9 +120,7 @@ namespace brainbeats_backend.Controllers
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
-        List<dynamic> resultList = await PopulateVertexOwners(result);
-
-        return Ok(resultList);
+        return Ok(result);
       } catch (Exception e) {
         return BadRequest($"Something went wrong: {e}");
       }
@@ -150,9 +149,7 @@ namespace brainbeats_backend.Controllers
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
-        List<dynamic> resultList = await PopulateVertexOwners(result);
-
-        return Ok(resultList);
+        return Ok(result);
       } catch (Exception e) {
         return BadRequest($"Something went wrong: {e}");
       }
@@ -181,9 +178,7 @@ namespace brainbeats_backend.Controllers
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
-        List<dynamic> resultList = await PopulateVertexOwners(result);
-
-        return Ok(resultList);
+        return Ok(result);
       } catch (Exception e) {
         return BadRequest($"Something went wrong: {e}");
       }
@@ -253,11 +248,7 @@ namespace brainbeats_backend.Controllers
       try {
         var resultsPublic = await DatabaseConnection.Instance.ExecuteQuery(queryStringPublic);
         var resultsPrivate = await DatabaseConnection.Instance.ExecuteQuery(queryStringPrivate);
-
-        List<dynamic> resultListPublic = await PopulateVertexOwners(resultsPublic);
-        List<dynamic> resultListPrivate = await PopulateVertexOwners(resultsPrivate);
-
-        return Ok(resultListPublic.Concat(resultListPrivate));
+        return Ok(resultsPublic.Concat(resultsPrivate));
       } catch (Exception e) {
         return BadRequest($"Something went wrong: {e}");
       }
@@ -293,7 +284,7 @@ namespace brainbeats_backend.Controllers
       }
 
       try {
-        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString.ToString().ToLowerInvariant());
+        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
       } catch (Exception e) {
         return BadRequest($"Something went wrong: {e}");
@@ -410,10 +401,10 @@ namespace brainbeats_backend.Controllers
 
       try {
         // Delete the png or jpg picture associated with this Playlist
-        await StorageConnection.Instance.DeleteFileAsync("user", body.GetValue("email").ToString() + "_image.png");
-        await StorageConnection.Instance.DeleteFileAsync("user", body.GetValue("email").ToString() + "_image.jpg");
+        await StorageConnection.Instance.DeleteFileAsync("playlist", body.GetValue("id").ToString() + "_image.png");
+        await StorageConnection.Instance.DeleteFileAsync("playlist", body.GetValue("id").ToString() + "_image.jpg");
       } catch (Exception e) {
-        return BadRequest($"Error deleting associated storage uploads for Beat: {e}");
+        return BadRequest($"Error deleting associated storage uploads for Playlist: {e}");
       }
 
       try {
