@@ -53,7 +53,7 @@ namespace brainbeats_backend {
           throw new ArgumentException($"{prop.Name} field is missing");
         }
 
-        queryString.Append(await SetField(prop, vertexType, vertexId, obj));
+        queryString.Append(await SetField(prop, vertexType, vertexId, obj).ConfigureAwait(false));
       }
 
       // Append the seed field if it is present
@@ -100,7 +100,7 @@ namespace brainbeats_backend {
           continue;
         }
 
-        queryString.Append(await SetField(prop, vertexType, vertexId, obj));
+        queryString.Append(await SetField(prop, vertexType, vertexId, obj).ConfigureAwait(false));
       }
 
       queryString.Append(AddProperty("modifiedDate", GetCurrentTime()));

@@ -123,12 +123,12 @@ namespace brainbeats_backend {
       return responseString;
     }
 
-    public async Task<string> RefreshToken(string refreshToken) {
+    public async Task<string> RefreshToken(string token) {
       var values = new Dictionary<string, string>
       {
         { "client_id", appId },
         { "grant_type", "refresh_token" },
-        { "refresh_token", refreshToken },
+        { "refresh_token", token },
         { "scope", $"openid {appId} offline_access" },
         { "response_type", "token id_token" }
       };
