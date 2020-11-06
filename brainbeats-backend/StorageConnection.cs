@@ -13,23 +13,25 @@ namespace brainbeats_backend {
   public class StorageConnection {
     public static StorageConnection Instance { get; set; }
 
-    private BlobServiceClient blobServiceClient { get; set; }
+    private BlobServiceClient BlobServiceClient { get; set; }
+    public string StorageEndpoint { get; set; }
 
     public static void Init(IConfiguration configuration) {
       Instance = new StorageConnection(configuration);
     }
 
     private StorageConnection(IConfiguration configuration) {
-      blobServiceClient = new BlobServiceClient(configuration["Storage:ConnectionString"]);
+      BlobServiceClient = new BlobServiceClient(configuration["Storage:ConnectionString"]);
+      StorageEndpoint = configuration["Storage:StorageEndpoint"];
     }
 
     public async Task<string> UploadFileAsync(IFormFile file, string containerName, string fileName) {
       BlobContainerClient containerClient;
 
       try {
-        containerClient = await blobServiceClient.CreateBlobContainerAsync(containerName);
+        containerClient = await BlobServiceClient.CreateBlobContainerAsync(containerName);
       } catch {
-        containerClient = blobServiceClient.GetBlobContainerClient(containerName);
+        containerClient = BlobServiceClient.GetBlobContainerClient(containerName);
       }
 
       BlobClient blobClient = containerClient.GetBlobClient(fileName);
@@ -49,9 +51,9 @@ namespace brainbeats_backend {
       BlobContainerClient containerClient;
 
       try {
-        containerClient = await blobServiceClient.CreateBlobContainerAsync(containerName);
+        containerClient = await BlobServiceClient.CreateBlobContainerAsync(containerName);
       } catch {
-        containerClient = blobServiceClient.GetBlobContainerClient(containerName);
+        containerClient = BlobServiceClient.GetBlobContainerClient(containerName);
       }
 
       BlobClient blobClient = containerClient.GetBlobClient(fileName);

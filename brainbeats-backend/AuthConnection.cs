@@ -122,5 +122,22 @@ namespace brainbeats_backend {
 
       return responseString;
     }
+
+    public async Task<string> RefreshToken(string token) {
+      var values = new Dictionary<string, string>
+      {
+        { "client_id", appId },
+        { "grant_type", "refresh_token" },
+        { "refresh_token", token },
+        { "scope", $"openid {appId} offline_access" },
+        { "response_type", "token id_token" }
+      };
+
+      var content = new FormUrlEncodedContent(values);
+      var response = await this.httpClient.PostAsync(tokenEndpoint, content);
+      var responseString = await response.Content.ReadAsStringAsync();
+
+      return responseString;
+    }
   }
 }

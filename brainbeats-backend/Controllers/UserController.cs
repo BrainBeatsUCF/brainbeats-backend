@@ -29,7 +29,7 @@ namespace brainbeats_backend.Controllers {
   [Route("api/[controller]")]
   [ApiController]
   public class UserController : ControllerBase {
-    private readonly string defaultProfilePicture = "DEFAULT_PROFILE_PLACEHOLDER";
+    private readonly string defaultProfilePicture = $"{StorageConnection.Instance.StorageEndpoint}/static/profile_picture.png";
 
     [HttpPost]
     [Route("login_user")]
@@ -38,8 +38,8 @@ namespace brainbeats_backend.Controllers {
 
       string res;
       try {
-         res = await AuthConnection.Instance.LoginUser(body.GetValue("email").ToString(), 
-          body.GetValue("password").ToString());
+        res = await AuthConnection.Instance.LoginUser(body.GetValue("email").ToString().ToLowerInvariant(),
+         body.GetValue("password").ToString());
       } catch (Exception e) {
         return BadRequest($"Something went wrong: {e}");
       }
@@ -73,7 +73,7 @@ namespace brainbeats_backend.Controllers {
         JObject user = new JObject(
           new JProperty("firstName", claimsDictionary["given_name"]),
           new JProperty("lastName", claimsDictionary["family_name"]),
-          new JProperty("email", claimsDictionary["emails"]));
+          new JProperty("email", claimsDictionary["emails"].ToLowerInvariant()));
 
         IActionResult createUserResult = await CreateUser(user.ToString()).ConfigureAwait(false);
         OkObjectResult okResult = createUserResult as OkObjectResult;
@@ -87,6 +87,21 @@ namespace brainbeats_backend.Controllers {
       } catch (Exception e) {
         return BadRequest($"Unknown error signing user for the first time: {e}");
       }
+    }
+
+    [HttpPost]
+    [Route("refresh_token")]
+    public async Task<IActionResult> RefreshToken(dynamic req) {
+      JObject body = DeserializeRequest(req);
+
+      string res;
+      try {
+        res = await AuthConnection.Instance.RefreshToken(body.GetValue("refreshToken").ToString());
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
+      }
+
+      return Ok(res);
     }
 
     // Not a publicly accessible API
@@ -112,7 +127,7 @@ namespace brainbeats_backend.Controllers {
     }
 
     [HttpPost]
-    [Route("read_user")]
+    [Route("read_user")] 
     public async Task<IActionResult> ReadUser(dynamic req) {
       try {
         HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
@@ -218,10 +233,10 @@ namespace brainbeats_backend.Controllers {
       string queryString;
 
       try {
-        string extension = Path.GetExtension(request.image.FileName);
+        string extension = Path.GetExtension(request.image.FileName).ToLowerInvariant();
 
         // Reject improper file extensions
-        if (!extension.ToLowerInvariant().Equals(".jpg") && !extension.ToLowerInvariant().Equals(".png")) {
+        if (!extension.Equals(".jpg") && !extension.Equals(".png")) {
           return BadRequest("Image file extension must be jpg or png");
         }
 
@@ -268,6 +283,35 @@ namespace brainbeats_backend.Controllers {
       }
     }
 
+    [HttpGet]
+    [Route("get_all_users")]
+    public async Task<IActionResult> GetAllUsers() {
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return Unauthorized($"Unauthenticated error: {e}");
+      }
+
+      string queryString;
+
+      try {
+        queryString = GetAllVerticesQuery("user");
+      } catch (Exception e) {
+        return BadRequest($"Malformed Request: {e}");
+      }
+
+      try {
+        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
+
+        return Ok(result);
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
+      }
+    }
+
     [HttpPost]
     [Route("delete_user")]
     public async Task<IActionResult> DeleteUser(dynamic req) {
@@ -284,15 +328,46 @@ namespace brainbeats_backend.Controllers {
       string queryString;
 
       try {
-        await StorageConnection.Instance.DeleteFileAsync("user", body.GetValue("email").ToString() + "_image");
+        // Delete the png or jpg profile picture associated with this User
+        await StorageConnection.Instance.DeleteFileAsync("user", body.GetValue("email").ToString() + "_image.png");
+        await StorageConnection.Instance.DeleteFileAsync("user", body.GetValue("email").ToString() + "_image.jpg");
       } catch (Exception e) {
         return BadRequest($"Error deleting associated storage uploads for User: {e}");
       }
 
       try {
-        queryString = DeleteVertexQuery(body.GetValue("email").ToString());
+        queryString = DeleteVertexQuery(body.GetValue("email").ToString().ToLowerInvariant());
       } catch (Exception e) {
         return BadRequest($"Malformed request: {e}");
+      }
+
+      try {
+        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
+        return Ok(result);
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
+      }
+    }
+
+    [HttpPost]
+    [Route("get_recommended_beats")]
+    public async Task<IActionResult> GetRecommendedBeats(dynamic req) {
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return Unauthorized($"Unauthenticated error: {e}");
+      }
+
+      JObject body = DeserializeRequest(req);
+      string queryString;
+
+      try {
+        queryString = GetOutNeighborsQuery("beat", "RECOMMENDED", body.GetValue("email").ToString().ToLowerInvariant());
+      } catch (Exception e) {
+        return BadRequest($"Malformed Request: {e}");
       }
 
       try {
@@ -319,7 +394,7 @@ namespace brainbeats_backend.Controllers {
       string queryString;
 
       try {
-        queryString = GetOutNeighborsQuery("beat", "LIKES", body.GetValue("email").ToString());
+        queryString = GetOutNeighborsQuery("beat", "LIKES", body.GetValue("email").ToString().ToLowerInvariant());
       } catch (Exception e) {
         return BadRequest($"Malformed Request: {e}");
       }
@@ -348,7 +423,7 @@ namespace brainbeats_backend.Controllers {
       string queryString;
 
       try {
-        queryString = GetOutNeighborsQuery("playlist", "LIKES", body.GetValue("email").ToString());
+        queryString = GetOutNeighborsQuery("playlist", "LIKES", body.GetValue("email").ToString().ToLowerInvariant());
       } catch (Exception e) {
         return BadRequest($"Malformed Request: {e}");
       }
@@ -377,7 +452,7 @@ namespace brainbeats_backend.Controllers {
       string queryString;
 
       try {
-        queryString = GetOutNeighborsQuery("sample", "LIKES", body.GetValue("email").ToString());
+        queryString = GetOutNeighborsQuery("sample", "LIKES", body.GetValue("email").ToString().ToLowerInvariant());
       } catch (Exception e) {
         return BadRequest($"Malformed Request: {e}");
       }
@@ -406,7 +481,7 @@ namespace brainbeats_backend.Controllers {
       string queryString;
 
       try {
-        queryString = GetInNeighborsQuery("beat", "OWNED_BY", body.GetValue("email").ToString());
+        queryString = GetInNeighborsQuery("beat", "OWNED_BY", body.GetValue("email").ToString().ToLowerInvariant());
       } catch (Exception e) {
         return BadRequest($"Malformed Request: {e}");
       }
@@ -435,7 +510,7 @@ namespace brainbeats_backend.Controllers {
       string queryString;
 
       try {
-        queryString = GetInNeighborsQuery("playlist", "OWNED_BY", body.GetValue("email").ToString());
+        queryString = GetInNeighborsQuery("playlist", "OWNED_BY", body.GetValue("email").ToString().ToLowerInvariant());
       } catch (Exception e) {
         return BadRequest($"Malformed Request: {e}");
       }
@@ -464,7 +539,7 @@ namespace brainbeats_backend.Controllers {
       string queryString;
 
       try {
-        queryString = GetInNeighborsQuery("sample", "OWNED_BY", body.GetValue("email").ToString());
+        queryString = GetInNeighborsQuery("sample", "OWNED_BY", body.GetValue("email").ToString().ToLowerInvariant());
       } catch (Exception e) {
         return BadRequest($"Malformed Request: {e}");
       }
@@ -493,7 +568,7 @@ namespace brainbeats_backend.Controllers {
       string queryString;
 
       try {
-        queryString = CreateOutNeighborQuery("LIKES", body.GetValue("email").ToString(), body.GetValue("vertexId").ToString());
+        queryString = CreateOutNeighborQuery("LIKES", body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("vertexId").ToString());
       } catch (Exception e) {
         return BadRequest($"Malformed request: {e}");
       }
@@ -522,16 +597,16 @@ namespace brainbeats_backend.Controllers {
       string queryString;
 
       try {
-        queryString = DeleteOutNeighborQuery("LIKES", body.GetValue("email").ToString(), body.GetValue("vertexId").ToString());
+        queryString = DeleteOutNeighborQuery("LIKES", body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("vertexId").ToString());
       } catch (Exception e) {
-        return BadRequest("Malformed request: {e}");
+        return BadRequest($"Malformed request: {e}");
       }
 
       try {
         var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
         return Ok(result);
       } catch (Exception e) {
-        return BadRequest("Something went wrong: {e}");
+        return BadRequest($"Something went wrong: {e}");
       }
     }
 
@@ -544,6 +619,35 @@ namespace brainbeats_backend.Controllers {
 
       try {
         queryString = GetOutNeighborsQuery("user", "OWNED_BY", body.GetValue("vertexId").ToString());
+      } catch (Exception e) {
+        return BadRequest($"Malformed request: {e}");
+      }
+
+      try {
+        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
+        return Ok(result);
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
+      }
+    }
+
+    [HttpPost]
+    [Route("recommend_vertex")]
+    public async Task<IActionResult> RecommendVertex(dynamic req) {
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return Unauthorized($"Unauthenticated error: {e}");
+      }
+
+      JObject body = DeserializeRequest(req);
+      string queryString;
+
+      try {
+        queryString = CreateOutNeighborQuery("RECOMMENDED", body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("vertexId").ToString());
       } catch (Exception e) {
         return BadRequest($"Malformed request: {e}");
       }

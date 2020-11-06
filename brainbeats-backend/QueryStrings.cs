@@ -53,33 +53,7 @@ namespace brainbeats_backend {
           throw new ArgumentException($"{prop.Name} field is missing");
         }
 
-        Type type = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
-        if (type == typeof(IFormFile)) {
-          IFormFile file = (IFormFile) prop.GetValue(obj);
-          string extension = Path.GetExtension(file.FileName);
-
-          // Reject improper file extensions
-          if (prop.Name.Equals("audio") && (!extension.ToLowerInvariant().Equals(".wav") && !extension.ToLowerInvariant().Equals(".mp3"))) {
-            throw new ArgumentException($"{prop.Name} file extension must be wav or mp3");
-          }
-
-          if (prop.Name.Equals("image") && (!extension.ToLowerInvariant().Equals(".jpg") && !extension.ToLowerInvariant().Equals(".png"))) {
-            throw new ArgumentException($"{prop.Name} file extension must be jpg or png");
-          }
-
-          string fileName = $"{vertexId}_{prop.Name}";
-
-          string url = await StorageConnection.Instance.UploadFileAsync(file, vertexType, fileName);
-          queryString.Append(AddProperty(prop.Name, url));
-        } else {
-          string value = prop.GetValue(obj).ToString();
-          queryString.Append(AddProperty(prop.Name, value));
-
-          // If this is the "name" field, make a lowercased field for type insensitive searches
-          if (prop.Name.Equals("name")) {
-            queryString.Append(AddProperty("searchName", value.ToLowerInvariant()));
-          }
-        }
+        queryString.Append(await SetField(prop, vertexType, vertexId, obj).ConfigureAwait(false));
       }
 
       // Append the seed field if it is present
@@ -126,36 +100,50 @@ namespace brainbeats_backend {
           continue;
         }
 
-        Type type = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
-        if (type == typeof(IFormFile)) {
-          IFormFile file = (IFormFile) prop.GetValue(obj);
-          string extension = Path.GetExtension(file.FileName);
-
-          // Reject improper file extensions
-          if (prop.Name.Equals("audio") && (!extension.ToLowerInvariant().Equals(".wav") && !extension.ToLowerInvariant().Equals(".mp3"))) {
-            throw new ArgumentException($"{prop.Name} file extension must be wav or mp3");
-          }
-
-          if (prop.Name.Equals("image") && (!extension.ToLowerInvariant().Equals(".jpg") && !extension.ToLowerInvariant().Equals(".png"))) {
-            throw new ArgumentException($"{prop.Name} file extension must be jpg or png");
-          }
-
-          string fileName = $"{vertexId}_{prop.Name}";
-
-          string url = await StorageConnection.Instance.UploadFileAsync(file, vertexType, fileName);
-          queryString.Append(AddProperty(prop.Name, url));
-        } else {
-          string value = prop.GetValue(obj).ToString();
-          queryString.Append(AddProperty(prop.Name, value));
-
-          // If this is the "name" field, make a lowercased field for type insensitive searches
-          if (prop.Name.Equals("name")) {
-            queryString.Append(AddProperty("searchName", value.ToLowerInvariant()));
-          }
-        }
+        queryString.Append(await SetField(prop, vertexType, vertexId, obj).ConfigureAwait(false));
       }
 
       queryString.Append(AddProperty("modifiedDate", GetCurrentTime()));
+
+      return queryString.ToString();
+    }
+
+    // Helper method to add a vertex property based on a specific prop
+    private static async Task<string> SetField(PropertyInfo prop, string vertexType, string vertexId, object obj) {
+      StringBuilder queryString = new StringBuilder();
+      Type type = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+
+      if (type == typeof(IFormFile)) {
+        IFormFile file = (IFormFile)prop.GetValue(obj);
+        string extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+
+        // Reject improper file extensions
+        if (prop.Name.Equals("audio") && (!extension.Equals(".wav") && !extension.Equals(".mp3"))) {
+          throw new ArgumentException($"{prop.Name} file extension must be wav or mp3");
+        }
+
+        if (prop.Name.Equals("image") && (!extension.Equals(".jpg") && !extension.Equals(".png"))) {
+          throw new ArgumentException($"{prop.Name} file extension must be jpg or png");
+        }
+
+        string fileName = $"{vertexId}_{prop.Name}{extension}";
+
+        string url = await StorageConnection.Instance.UploadFileAsync(file, vertexType, fileName);
+        queryString.Append(AddProperty(prop.Name, url));
+      } else {
+        string value = prop.GetValue(obj).ToString();
+
+        if (prop.Name.Equals("image")) {
+          value = $"{StorageConnection.Instance.StorageEndpoint}/static/{value}.png";
+        }
+
+        queryString.Append(AddProperty(prop.Name, value));
+
+        // If this is the "name" field, make a lowercased field for type insensitive searches
+        if (prop.Name.Equals("name")) {
+          queryString.Append(AddProperty("searchName", value.ToLowerInvariant()));
+        }
+      }
 
       return queryString.ToString();
     }
@@ -172,6 +160,16 @@ namespace brainbeats_backend {
     // Searches the specified vertex
     public static string SearchVertexQuery(string vertexType, string searchWord) {
       return GetAllVertices(vertexType) + HasProperty("searchName", searchWord);
+    }
+
+    // Searches the specified public vertex
+    public static string SearchPublicVertexQuery(string vertexType, string searchWord) {
+      return GetAllPublicVerticesQuery(vertexType) + HasProperty("searchName", searchWord);
+    }
+
+    // Searches the specified owned vertex
+    public static string SearchOwnedVertexQuery(string vertexType, string email, string searchWord) {
+      return GetAllOwnedVerticesQuery(vertexType, email) + HasProperty("searchName", searchWord);
     }
 
     // Deletes the specified vertex
@@ -196,12 +194,16 @@ namespace brainbeats_backend {
 
     // Gets all privately owned vertices of a specific type owned by a given email
     public static string GetAllPrivateVerticesQuery(string vertexType, string email) {
-      return GetAllOwnedVerticesQuery(vertexType, email) + HasProperty("isPrivate", "true");
+      return GetAllOwnedVerticesQuery(vertexType, email) + HasProperty("isPrivate", "True");
+    }
+
+    public static string GetAllVerticesQuery(string vertexType) {
+      return GetAllVertices(vertexType);
     }
 
     // Gets all public vertices of a specific type
     public static string GetAllPublicVerticesQuery(string vertexType) {
-      return GetAllVertices(vertexType) + HasProperty("isPrivate", "false");
+      return GetAllVertices(vertexType) + HasProperty("isPrivate", "False");
     }
 
     // Gets neighbors that have an incoming edge coming from the vertexId

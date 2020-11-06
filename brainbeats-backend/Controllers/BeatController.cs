@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -11,6 +12,7 @@ using static brainbeats_backend.Utility;
 namespace brainbeats_backend.Controllers {
   public class Beat {
     public string email { get; set; }
+    public string owner { get; set; }
     public string id { get; set; }
     public string name { get; set; }
     public IFormFile image { get; set; }
@@ -40,9 +42,12 @@ namespace brainbeats_backend.Controllers {
       string queryString;
 
       try {
+        string email = request.email.ToLowerInvariant();
         List<KeyValuePair<string, string>> edges = new List<KeyValuePair<string, string>> {
-          new KeyValuePair<string, string>("OWNED_BY", request.email)
+          new KeyValuePair<string, string>("OWNED_BY", email)
         };
+
+        request.owner = email;
 
         queryString = await CreateVertexQueryAsync(request, edges);
       } catch (Exception e) {
@@ -74,7 +79,7 @@ namespace brainbeats_backend.Controllers {
 
       // Verify ownership
       try {
-        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString(), body.GetValue("id").ToString())) {
+        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("id").ToString())) {
           return BadRequest("User is not the owner of this private Beat");
         }
       } catch (Exception e) {
@@ -125,6 +130,64 @@ namespace brainbeats_backend.Controllers {
     }
 
     [HttpPost]
+    [Route("search_public_beats")]
+    public async Task<IActionResult> SearchPublicBeats(dynamic req) {
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return Unauthorized($"Unauthenticated error: {e}");
+      }
+
+      JObject body = DeserializeRequest(req);
+      string queryString;
+
+      try {
+        queryString = SearchPublicVertexQuery("beat", body.GetValue("name").ToString().ToLowerInvariant());
+      } catch (Exception e) {
+        return BadRequest($"Malformed request: {e}");
+      }
+
+      try {
+        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
+        return Ok(result);
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
+      }
+    }
+
+    [HttpPost]
+    [Route("search_owned_beats")]
+    public async Task<IActionResult> SearchOwnedBeats(dynamic req) {
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return Unauthorized($"Unauthenticated error: {e}");
+      }
+
+      JObject body = DeserializeRequest(req);
+      string queryString;
+
+      try {
+        queryString = SearchOwnedVertexQuery("beat", body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("name").ToString().ToLowerInvariant());
+      } catch (Exception e) {
+        return BadRequest($"Malformed request: {e}");
+      }
+
+      try {
+        var result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
+        return Ok(result);
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
+      }
+    }
+
+    [HttpPost]
     [Route("get_all_beats")]
     public async Task<IActionResult> GetAllBeats(dynamic req) {
       try {
@@ -142,7 +205,7 @@ namespace brainbeats_backend.Controllers {
 
       try {
         queryStringPublic = GetAllPublicVerticesQuery("beat");
-        queryStringPrivate = GetAllPrivateVerticesQuery("beat", body.GetValue("email").ToString());
+        queryStringPrivate = GetAllPrivateVerticesQuery("beat", body.GetValue("email").ToString().ToLowerInvariant());
       } catch (Exception e) {
         return BadRequest($"Malformed request: {e}");
       }
@@ -151,17 +214,7 @@ namespace brainbeats_backend.Controllers {
         var resultsPublic = await DatabaseConnection.Instance.ExecuteQuery(queryStringPublic);
         var resultsPrivate = await DatabaseConnection.Instance.ExecuteQuery(queryStringPrivate);
 
-        List<dynamic> resultList = new List<dynamic>();
-
-        foreach (var item in resultsPublic) {
-          resultList.Add(item);
-        }
-
-        foreach (var item in resultsPrivate) {
-          resultList.Add(item);
-        }
-
-        return Ok(resultList);
+        return Ok(resultsPublic.Concat(resultsPrivate));
       } catch (Exception e) {
         return BadRequest($"Something went wrong: {e}");
       }
@@ -169,7 +222,7 @@ namespace brainbeats_backend.Controllers {
 
     [HttpPost]
     [Route("update_beat")]
-    public async Task<IActionResult> UpdateBeat(dynamic req) {
+    public async Task<IActionResult> UpdateBeat([FromForm] Beat b) {
       try {
         HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
         AuthConnection.Instance.ValidateToken(authorizationToken);
@@ -179,7 +232,6 @@ namespace brainbeats_backend.Controllers {
         return Unauthorized($"Unauthenticated error: {e}");
       }
 
-      Beat b = DeserializeRequest(req, new Beat());
       string queryString;
 
       // Verify ownership
@@ -222,7 +274,7 @@ namespace brainbeats_backend.Controllers {
 
       // Verify ownership
       try {
-        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString(), body.GetValue("id").ToString())) {
+        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("id").ToString())) {
           return BadRequest("User is not the owner of this private Beat");
         }
       } catch (Exception e) {
@@ -230,8 +282,13 @@ namespace brainbeats_backend.Controllers {
       }
 
       try {
-        await StorageConnection.Instance.DeleteFileAsync("beat", body.GetValue("id").ToString() + "_image");
-        await StorageConnection.Instance.DeleteFileAsync("beat", body.GetValue("id").ToString() + "_audio");
+        // Delete the png or jpg picture associated with this Beat
+        await StorageConnection.Instance.DeleteFileAsync("beat", body.GetValue("id").ToString() + "_image.jpg");
+        await StorageConnection.Instance.DeleteFileAsync("beat", body.GetValue("id").ToString() + "_image.png");
+
+        // Delete the wav or mp3 audio associated with this Beat
+        await StorageConnection.Instance.DeleteFileAsync("beat", body.GetValue("id").ToString() + "_audio.wav");
+        await StorageConnection.Instance.DeleteFileAsync("beat", body.GetValue("id").ToString() + "_audio.mp3");
       } catch (Exception e) {
         return BadRequest($"Error deleting associated storage uploads for Beat: {e}");
       }
