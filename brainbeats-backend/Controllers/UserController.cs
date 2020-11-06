@@ -75,7 +75,7 @@ namespace brainbeats_backend.Controllers {
           new JProperty("lastName", claimsDictionary["family_name"]),
           new JProperty("email", claimsDictionary["emails"].ToLowerInvariant()));
 
-        IActionResult createUserResult = await CreateUser(user.ToString().ToLowerInvariant()).ConfigureAwait(false);
+        IActionResult createUserResult = await CreateUser(user.ToString()).ConfigureAwait(false);
         OkObjectResult okResult = createUserResult as OkObjectResult;
 
         if (okResult.StatusCode != 200) {
