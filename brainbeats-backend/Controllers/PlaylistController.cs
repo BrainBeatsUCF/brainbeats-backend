@@ -40,11 +40,13 @@ namespace brainbeats_backend.Controllers
       string queryString;
 
       try {
+        string email = request.email.ToLowerInvariant();
+
         List<KeyValuePair<string, string>> edges = new List<KeyValuePair<string, string>> {
-          new KeyValuePair<string, string>("OWNED_BY", request.email.ToLowerInvariant())
+          new KeyValuePair<string, string>("OWNED_BY", email)
         };
 
-        request.owner = request.email.ToLowerInvariant();
+        request.owner = email;
 
         queryString = await CreateVertexQueryAsync(request, edges);
       } catch (Exception e) {
@@ -76,7 +78,7 @@ namespace brainbeats_backend.Controllers
 
       // Verify ownership
       try {
-        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("id").ToString().ToLowerInvariant())) {
+        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("id").ToString())) {
           return BadRequest("User is not the owner of this private Playlist");
         }
       } catch (Exception e) {
@@ -84,7 +86,7 @@ namespace brainbeats_backend.Controllers
       }
 
       try {
-        queryString = ReadVertexQuery(body.GetValue("id").ToString().ToLowerInvariant());
+        queryString = ReadVertexQuery(body.GetValue("id").ToString());
       } catch (Exception e) {
         return BadRequest($"Malformed request: {e}");
       }
@@ -201,7 +203,7 @@ namespace brainbeats_backend.Controllers
 
       // Verify ownership
       try {
-        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("id").ToString().ToLowerInvariant())) {
+        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("id").ToString())) {
           return BadRequest("User is not the owner of this private Playlist");
         }
       } catch (Exception e) {
@@ -209,7 +211,7 @@ namespace brainbeats_backend.Controllers
       }
 
       try {
-        queryString = GetOutNeighborsQuery("beat", "CONTAINS", body.GetValue("id").ToString().ToLowerInvariant());
+        queryString = GetOutNeighborsQuery("beat", "CONTAINS", body.GetValue("id").ToString());
       } catch (Exception e) {
         return BadRequest($"Malformed request: {e}");
       }
@@ -308,11 +310,11 @@ namespace brainbeats_backend.Controllers
 
       // Verify ownership
       try {
-        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("playlistId").ToString().ToLowerInvariant())) {
+        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("playlistId").ToString())) {
           return BadRequest("User is not the owner of this private Playlist");
         }
 
-        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("beatId").ToString().ToLowerInvariant())) {
+        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("beatId").ToString())) {
           return BadRequest("User is not the owner of this private Beat");
         }
       } catch (Exception e) {
@@ -320,7 +322,7 @@ namespace brainbeats_backend.Controllers
       }
 
       try {
-        queryString = DeleteOutNeighborQuery("CONTAINS", body.GetValue("playlistId").ToString().ToLowerInvariant(), body.GetValue("beatId").ToString().ToLowerInvariant());
+        queryString = DeleteOutNeighborQuery("CONTAINS", body.GetValue("playlistId").ToString(), body.GetValue("beatId").ToString());
       } catch (Exception e) {
         return BadRequest($"Malformed Request: {e}");
       }
@@ -350,11 +352,11 @@ namespace brainbeats_backend.Controllers
 
       // Verify ownership
       try {
-        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("playlistId").ToString().ToLowerInvariant())) {
+        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("playlistId").ToString())) {
           return BadRequest("User is not the owner of this private Playlist");
         }
 
-        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("beatId").ToString().ToLowerInvariant())) {
+        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("beatId").ToString())) {
           return BadRequest("User is not the owner of this private Beat");
         }
       } catch (Exception e) {
@@ -362,7 +364,7 @@ namespace brainbeats_backend.Controllers
       }
 
       try {
-        queryString = CreateOutNeighborQuery("CONTAINS", body.GetValue("playlistId").ToString().ToLowerInvariant(), body.GetValue("beatId").ToString().ToLowerInvariant());
+        queryString = CreateOutNeighborQuery("CONTAINS", body.GetValue("playlistId").ToString(), body.GetValue("beatId").ToString());
       } catch (Exception e) {
         return BadRequest($"Malformed request: {e}");
       }
@@ -392,7 +394,7 @@ namespace brainbeats_backend.Controllers
 
       // Verify ownership
       try {
-        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("id").ToString().ToLowerInvariant())) {
+        if (!await ValidateVertexOwnershipAsync(body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("id").ToString())) {
           return BadRequest("User is not the owner of this private Playlist");
         }
       } catch (Exception e) {
@@ -408,7 +410,7 @@ namespace brainbeats_backend.Controllers
       }
 
       try {
-        queryString = DeleteVertexQuery(body.GetValue("id").ToString().ToLowerInvariant());
+        queryString = DeleteVertexQuery(body.GetValue("id").ToString());
       } catch (Exception e) {
         return BadRequest($"Malformed request: {e}");
       }

@@ -233,10 +233,10 @@ namespace brainbeats_backend.Controllers {
       string queryString;
 
       try {
-        string extension = Path.GetExtension(request.image.FileName);
+        string extension = Path.GetExtension(request.image.FileName).ToLowerInvariant();
 
         // Reject improper file extensions
-        if (!extension.ToLowerInvariant().Equals(".jpg") && !extension.ToLowerInvariant().Equals(".png")) {
+        if (!extension.Equals(".jpg") && !extension.Equals(".png")) {
           return BadRequest("Image file extension must be jpg or png");
         }
 
@@ -568,7 +568,7 @@ namespace brainbeats_backend.Controllers {
       string queryString;
 
       try {
-        queryString = CreateOutNeighborQuery("LIKES", body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("vertexId").ToString().ToLowerInvariant());
+        queryString = CreateOutNeighborQuery("LIKES", body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("vertexId").ToString());
       } catch (Exception e) {
         return BadRequest($"Malformed request: {e}");
       }
@@ -597,7 +597,7 @@ namespace brainbeats_backend.Controllers {
       string queryString;
 
       try {
-        queryString = DeleteOutNeighborQuery("LIKES", body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("vertexId").ToString().ToLowerInvariant());
+        queryString = DeleteOutNeighborQuery("LIKES", body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("vertexId").ToString());
       } catch (Exception e) {
         return BadRequest($"Malformed request: {e}");
       }
@@ -618,7 +618,7 @@ namespace brainbeats_backend.Controllers {
       string queryString;
 
       try {
-        queryString = GetOutNeighborsQuery("user", "OWNED_BY", body.GetValue("vertexId").ToString().ToLowerInvariant());
+        queryString = GetOutNeighborsQuery("user", "OWNED_BY", body.GetValue("vertexId").ToString());
       } catch (Exception e) {
         return BadRequest($"Malformed request: {e}");
       }
@@ -647,7 +647,7 @@ namespace brainbeats_backend.Controllers {
       string queryString;
 
       try {
-        queryString = CreateOutNeighborQuery("RECOMMENDED", body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("vertexId").ToString().ToLowerInvariant());
+        queryString = CreateOutNeighborQuery("RECOMMENDED", body.GetValue("email").ToString().ToLowerInvariant(), body.GetValue("vertexId").ToString());
       } catch (Exception e) {
         return BadRequest($"Malformed request: {e}");
       }
