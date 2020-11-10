@@ -94,8 +94,8 @@ namespace brainbeats_backend.GremlinQueries {
 
         List<dynamic> resultList = await PopulateVertexOwners(resultsPublic.Concat(resultsPrivate));
 
-          return resultList;
-        }
+        return resultList;
+      }
     }
 
     public static async Task<List<dynamic>> ReadBeatVertexQuery(string beatId) {
