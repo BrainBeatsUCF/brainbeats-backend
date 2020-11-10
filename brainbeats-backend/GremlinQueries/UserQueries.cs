@@ -53,21 +53,20 @@ namespace brainbeats_backend.GremlinQueries {
         throw new ArgumentException("Relationship must be one of: " + string.Join(" ", relationships));
       }
 
-      string queryString;
+      StringBuilder queryString = new StringBuilder(GetVertex(email));
 
-      // If type is unspecified, then get all vertices with a given relationship
-      if (string.IsNullOrWhiteSpace(type)) {
-        queryString = GetVertex(email) + GetOutNeighbors(relationship);
+      if (relationship.Equals("OWNED_BY")) {
+        queryString.Append(GetInNeighbors(relationship) + EdgeSourceReference());
       } else {
-        type = type.ToLowerInvariant();
-        if (!types.Contains(type)) {
-          throw new ArgumentException("Type must be one of: " + string.Join(" ", types));
-        }
-
-        queryString = GetVertex(email) + GetOutNeighbors(relationship) + HasLabel(type);
+        queryString.Append(GetOutNeighbors(relationship));
       }
 
-      ResultSet<dynamic> result = await DatabaseConnection.Instance.ExecuteQuery(queryString);
+      // If type is specified, then filter by vertex type
+      if (!string.IsNullOrWhiteSpace(type)) {
+        queryString.Append(HasLabel(type));
+      }
+
+      ResultSet<dynamic> result = await DatabaseConnection.Instance.ExecuteQuery(queryString.ToString());
 
       List<dynamic> resultList = await PopulatePlaylistLength(result);
       resultList = await PopulateVertexOwners(resultList);
