@@ -68,8 +68,6 @@ namespace brainbeats_backend.GremlinQueries {
 
       ResultSet<dynamic> result = await DatabaseConnection.Instance.ExecuteQuery(queryString.ToString());
 
-      Console.WriteLine(queryString.ToString());
-
       List<dynamic> resultList = await PopulatePlaylistLength(result);
       resultList = await PopulateVertexOwners(resultList);
 
