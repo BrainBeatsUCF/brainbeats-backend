@@ -14,7 +14,7 @@ namespace brainbeats_backend.Controllers {
     public string instrumentList { get; set; }
     public IFormFile audio { get; set; }
     public string attributes { get; set; }
-    public int duration { get; set; }
+    public float duration { get; set; }
   }
 
   [Route("api/v2/beats")]
