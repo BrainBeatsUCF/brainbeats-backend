@@ -52,9 +52,19 @@ namespace brainbeats_backend {
       httpClient = new HttpClient();
     }
 
-    public JwtSecurityToken DecodeToken(string token) {
+    public static JwtSecurityToken DecodeToken(string token) {
       var handler = new JwtSecurityTokenHandler();
       return handler.ReadJwtToken(token);
+    }
+
+    public static Dictionary<string, string> GetClaimsFromToken(JwtSecurityToken jwt) {
+      Dictionary<string, string> claimsDictionary = new Dictionary<string, string>();
+
+      foreach (Claim claim in jwt.Claims) {
+        claimsDictionary[claim.Type] = claim.Value;
+      }
+
+      return claimsDictionary;
     }
 
     public JwtSecurityToken ValidateToken(string token) {
