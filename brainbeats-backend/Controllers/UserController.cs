@@ -52,7 +52,7 @@ namespace brainbeats_backend.Controllers {
         return Unauthorized(tokenObject.GetValue("error_description").ToString());
       }
 
-      JwtSecurityToken jwt = AuthConnection.Instance.DecodeToken(tokenObject.GetValue("access_token").ToString());
+      JwtSecurityToken jwt = AuthConnection.DecodeToken(tokenObject.GetValue("access_token").ToString());
 
       Dictionary<string, string> claimsDictionary = new Dictionary<string, string>();
       foreach (Claim claim in jwt.Claims) {

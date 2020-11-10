@@ -6,7 +6,12 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using static brainbeats_backend.QueryStrings;
+using static brainbeats_backend.QueryBuilder;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using System.Text;
+using System.IO;
+using Gremlin.Net.Driver;
 
 namespace brainbeats_backend {
   public static class Utility {
@@ -41,19 +46,34 @@ namespace brainbeats_backend {
       return true;
     }
 
-    public static async Task<List<dynamic>> PopulateVertexOwners(Gremlin.Net.Driver.ResultSet<dynamic> vertices) {
+    public static async Task<List<dynamic>> PopulateVertexOwners(dynamic vertices) {
       List<dynamic> resultList = new List<dynamic>();
 
-      foreach (var searchVertex in vertices) {
-        string queryString = GetOutNeighborsQuery("user", "OWNED_BY", searchVertex["id"].ToString().ToLowerInvariant());
+      foreach (var vertex in vertices) {
+        string queryString = GetOutNeighborsQuery("user", "OWNED_BY", vertex["id"].ToString());
         var owners = await DatabaseConnection.Instance.ExecuteQuery(queryString);
 
-        foreach (var ownerVertex in owners) {
-          searchVertex["owner"] = ownerVertex["id"];
-          resultList.Add(searchVertex);
-
-          break;
+        foreach (var owner in owners) {
+          vertex["owner"] = owner;
         }
+
+        resultList.Add(vertex);
+      }
+
+      return resultList;
+    }
+
+    public static async Task<List<dynamic>> PopulatePlaylistLength(dynamic vertices) {
+      List<dynamic> resultList = new List<dynamic>();
+
+      foreach (var vertex in vertices) {
+        if (vertex["label"].ToLowerInvariant().Equals("playlist")) {
+          string queryString = GetOutNeighborsQuery("beat", "CONTAINS", vertex["id"]);
+          ResultSet<dynamic> beatNeighbors = await DatabaseConnection.Instance.ExecuteQuery(queryString);
+          vertex["length"] = beatNeighbors.Count;
+        }
+
+        resultList.Add(vertex);
       }
 
       return resultList;

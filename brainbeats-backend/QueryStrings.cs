@@ -109,7 +109,7 @@ namespace brainbeats_backend {
     }
 
     // Helper method to add a vertex property based on a specific prop
-    private static async Task<string> SetField(PropertyInfo prop, string vertexType, string vertexId, object obj) {
+    public static async Task<string> SetField(PropertyInfo prop, string vertexType, string vertexId, object obj) {
       StringBuilder queryString = new StringBuilder();
       Type type = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
 
