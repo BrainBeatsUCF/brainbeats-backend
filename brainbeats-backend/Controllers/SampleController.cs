@@ -281,14 +281,6 @@ namespace brainbeats_backend.Controllers {
       }
 
       try {
-        // Delete the wav or mp3 audio associated with this Sample
-        await StorageConnection.Instance.DeleteFileAsync("sample", body.GetValue("id").ToString() + "_audio.wav");
-        await StorageConnection.Instance.DeleteFileAsync("sample", body.GetValue("id").ToString() + "_audio.mp3");
-      } catch (Exception e) {
-        return BadRequest($"Error deleting associated storage uploads for Sample: {e}");
-      }
-
-      try {
         queryString = DeleteVertexQuery(body.GetValue("id").ToString());
       } catch (Exception e) {
         return BadRequest($"Malformed request: {e}");
