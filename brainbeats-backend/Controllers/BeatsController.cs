@@ -72,8 +72,8 @@ namespace brainbeats_backend.Controllers {
     [HttpPost("create/{email}")]
     public async Task<IActionResult> CreateBeat(string email, string seed, [FromForm] BeatVertex b) {
       try {
-        //HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
-        //AuthConnection.Instance.ValidateToken(authorizationToken);
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
       } catch (ArgumentException e) {
         return BadRequest($"Malformed or missing authorization token: {e}");
       } catch (Exception e) {
