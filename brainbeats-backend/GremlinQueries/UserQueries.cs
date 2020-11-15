@@ -106,6 +106,20 @@ namespace brainbeats_backend.GremlinQueries {
       return await DatabaseConnection.Instance.ExecuteQuery(queryString.ToString());
     }
 
+    public static async Task<ResultSet<dynamic>> AddEdgeToUserVertexQuery(string email, string target) {
+      email = email.ToLowerInvariant();
+      string queryString = CreateOutNeighborQuery("LIKES", email, target);
+
+      return await DatabaseConnection.Instance.ExecuteQuery(queryString);
+    }
+
+    public static async Task<ResultSet<dynamic>> DeleteEdgeFromUserVertexQuery(string email, string target) {
+      email = email.ToLowerInvariant();
+      string queryString = DeleteOutNeighborQuery("LIKES", email, target);
+
+      return await DatabaseConnection.Instance.ExecuteQuery(queryString);
+    }
+
     public static async Task<ResultSet<dynamic>> ReadUserVertexQuery(string email) {
       email = email.ToLowerInvariant();
       string queryString = GetVertex(email);

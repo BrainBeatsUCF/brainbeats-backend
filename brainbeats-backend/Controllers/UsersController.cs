@@ -89,7 +89,7 @@ namespace brainbeats_backend.Controllers {
 
     // PUT api/v2/users/update/{email}
     [HttpPut("update/{email}")]
-    public async Task<IActionResult> UpdateUser(string email, UserVertex u) {
+    public async Task<IActionResult> UpdateUser(string email, [FromForm] UserVertex u) {
       try {
         HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
         AuthConnection.Instance.ValidateToken(authorizationToken);
@@ -101,6 +101,54 @@ namespace brainbeats_backend.Controllers {
 
       try {
         var result = await UpdateUserVertexQuery(email, u);
+        return Ok(result);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed request: {e}");
+      } catch (ResponseException e) {
+        return BadRequest($"Error with Gremlin Query: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
+      }
+    }
+
+    // PUT api/v2/users/add_edge/{email}/{target}
+    [HttpPut("add_edge/{email}/{target}")]
+    public async Task<IActionResult> AddEdge(string email, string target) {
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return Unauthorized($"Unauthenticated error: {e}");
+      }
+
+      try {
+        var result = await AddEdgeToUserVertexQuery(email, target);
+        return Ok(result);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed request: {e}");
+      } catch (ResponseException e) {
+        return BadRequest($"Error with Gremlin Query: {e}");
+      } catch (Exception e) {
+        return BadRequest($"Something went wrong: {e}");
+      }
+    }
+
+    // DELETE api/v2/users/delete_edge/{email}/{target}
+    [HttpDelete("delete_edge/{email}/{target}")]
+    public async Task<IActionResult> DeleteEdge(string email, string target) {
+      try {
+        HttpContext.Request.Headers.TryGetValue("Authorization", out StringValues authorizationToken);
+        AuthConnection.Instance.ValidateToken(authorizationToken);
+      } catch (ArgumentException e) {
+        return BadRequest($"Malformed or missing authorization token: {e}");
+      } catch (Exception e) {
+        return Unauthorized($"Unauthenticated error: {e}");
+      }
+
+      try {
+        var result = await DeleteEdgeFromUserVertexQuery(email, target);
         return Ok(result);
       } catch (ArgumentException e) {
         return BadRequest($"Malformed request: {e}");
