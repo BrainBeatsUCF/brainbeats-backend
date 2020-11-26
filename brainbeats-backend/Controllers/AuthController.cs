@@ -11,9 +11,18 @@ using static brainbeats_backend.Utility;
 using static brainbeats_backend.QueryBuilder;
 
 namespace brainbeats_backend.Controllers {
+  /// <summary>
+  /// AuthController.cs handles all authentication logic.
+  /// Includes Azure B2C ROPC Login and Token Refresh code, implemented with
+  /// Azure Graph.
+  /// </summary>
   [Route("api/v2")]
   [ApiController]
   public class AuthController : ControllerBase {
+    /// <summary>Logs in the User with a plaintext email and password.</summary>
+    /// <returns>Standard JWT.</returns>
+    /// <remarks>Expected request route: GET api/v2/login.</remarks>
+    /// <param name="req">JSON body containing the 'email' and 'password' field.</param>
     [HttpPost]
     [Route("login")]
     public async Task<IActionResult> Login(dynamic req) {
@@ -73,6 +82,13 @@ namespace brainbeats_backend.Controllers {
       }
     }
 
+    /// <summary>
+    /// Regenerates a JWT access token when supplied with a refresh token generated
+    /// during login.
+    /// </summary>
+    /// <returns>Standard JWT.</returns>
+    /// <remarks>Expected request route: GET api/v2/refresh_token.</remarks>
+    /// <param name="req">JSON body containing the 'refreshToken' field.</param>
     [HttpPost]
     [Route("refresh_token")]
     public async Task<IActionResult> RefreshToken(dynamic req) {

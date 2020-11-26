@@ -1,0 +1,29 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft": "Warning",
+      "Microsoft.Hosting.Lifetime": "Information"
+    }
+  },
+  "AllowedHosts": "*",
+  "Database": {
+    "EndpointUrl": "brain-beats-database.gremlin.cosmos.azure.com",
+    "PrimaryKey": "YOUR_PRIMARY_KEY",
+    "port": "443",
+    "database": "brain-beats-db",
+    "container": "brain-beats-graph"
+  },
+  "Storage": {
+    "ConnectionString": "YOUR_CONN_STRING",
+    "StorageEndpoint": "https://brainbeatsstorage.blob.core.windows.net"
+  },
+  "Auth": {
+    "TenantId": "YOUR_AZURE_TENANT_ID",
+    "AppId": "YOUR_REGISTERED_AZURE_APP_ID",
+    "ClientSecret": "YOUR_CLIENT_SECRET",
+    "B2cExtensionAppClientId": "YOUR_B2C_APP_ID",
+    "MetadataAddress": "https://ucfbrainbeats.b2clogin.com/ucfbrainbeats.onmicrosoft.com/b2c_1_signupsignin/v2.0/.well-known/openid-configuration",
+    "TokenEndpoint": "https://ucfbrainbeats.b2clogin.com/ucfbrainbeats.onmicrosoft.com/B2C_1_ropc_auth/oauth2/v2.0/token"
+  }
+}
