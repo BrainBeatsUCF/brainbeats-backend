@@ -4,6 +4,45 @@ This repository contains two projects:
 1. The C# ASP.NET Core Web API Backend containing code for all basic CRUD functionality that powers BrainBeats.
 2. The Python Azure Functions containing code for Song Recommendations and Storage Cleaning.
 
+### Database & File Storage
+This repository is dependant on a deployed Azure Cosmos DB account and Azure Storage account and all associated connection strings. If running this repository for the first time, please double check to see if your keys are configured correctly if you run into connection problems.
+
+### Security & User Auth
+This project uses a self-service registration flow for Active Directory, the documentation can be found here: `https://docs.microsoft.com/en-us/azure/active-directory/external-identities/self-service-sign-up-user-flow`.
+
+To get to the self-service configuration page, navigate to the "User Flows" page under the Azure AD B2C portal. If deploying and hosting this application in a new envnrionment, you will need to click "+ New User Flow" to generate a new sign up / sign in user flow and replace the Auth.MetadataAddress and Auth.TokenEndpoint variables in the appsettings.json file. See more below.
+
+### Configuration Keys
+In order to run this application locally, please rename the included APP_SETTINGS_TEMPLATE.json to appsettings.json, and fill in *only* the missing placeholder variables. If you are deploying and hosting this application in a new environment, you will need to fill in *all* variables with new names, endpoints, and ports.
+
+In order to run this application in a deployed environment, please navigate to your App Service portal's Configuration page and click "+ New application setting" to create new variables. The naming convention of the App Service application settings is as follows:
+
+```
+{
+    "Logging": {
+        "LogLevel": {
+            ...
+        }
+    },
+    "AllowedHosts": "*",
+    "Database": {
+        "EndpointUrl": "brain-beats-database.gremlin.cosmos.azure.com",
+        ...
+    },
+    ...
+}
+```
+
+The corresponding application setting name for Database.EndpointUrl is `Database__EndpointUrl` with double underscores representing .json nesting. In this example, the full application setting will be name `Database__EndpointUrl`, value `brain-beats-database.gremlin.cosmos.azure.com`.
+
+#### Helpful Hints:
+- Database.PrimaryKey can be found in your Azure Cosmos DB account's Keys page.
+- Storage.ConnectionString can be found in your Azure Storage account's Access Keys page.
+- Auth.TenantId is your Directory (tenant) ID unique to your Azure Active Directory domain.
+- Auth.AppId is your Application (client) ID you get in the Azure App Registrations page (you will need to register a new application if deploying from a fresh slate).
+- Auth.ClientSecret can be found in your Azure App Registration's Certificates & Secrets page corresponding to this registered application.
+- Auth.B2cExtensionAppClientId is your Application (client) ID you get from the *auto-generated* b2c-extensions-app in the Azure App Registrations page. If you can't see this application, please make sure you have "All Applications" selected and not "Owned Applications" selected in the registrations list.
+
 ## BrainBeats ASP.NET Core Web API Backend
 The BrainBeats backend is built with Microsoft Visual Studio. Using the Visual Studio IDE is strongly suggested for all testing and development.
 
