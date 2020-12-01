@@ -15,7 +15,8 @@ class DatabaseConnection:
             'recommend_beat': 'g.V(\'{email}\').property(\'propertyType\', \'{current_time}\').addE(\'RECOMMENDED\').to(g.V(\'{beat_id}\')).property(\'propertyType\', \'{current_time}\')',
             'get_all_public_beats': 'g.V().hasLabel(\'beat\').has(\'isPrivate\', \'False\')',
             'get_liked_beats': 'g.V(\'{email}\').outE(\'LIKES\').order().by(\'date\', decr).inV().limit({limit}).hasLabel(\'beat\')',
-            'delete_recommendations': 'g.V(\'{email}\').outE(\'RECOMMENDED\').drop()'
+            'delete_recommendations': 'g.V(\'{email}\').outE(\'RECOMMENDED\').drop()',
+            'get_owned_beats': 'g.V(\'{email}\').inE(\'OWNED_BY\').outV().hasLabel(\'beat\')'
         }
 
     def execute_query(self, query_string: str) -> Coroutine[None, None, list]:
