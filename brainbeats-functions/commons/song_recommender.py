@@ -17,7 +17,7 @@ from commons.KNN import KNN
 
 db_conn = DatabaseConnection(DATABASE_URL, DATABASE_NAME, DATABASE_COLLECTION, DATABASE_KEY)
 
-async def recommend_beats(email: str):
+async def recommend_beats(email: str) -> None:
     """
     Generates recommendations for a single user corresponding to the input email.
     """

@@ -15,7 +15,7 @@ LIMIT = int(os.environ['likes_limit'])
 K = int(os.environ['KNN_K'])
 
 from commons.DatabaseConnection import DatabaseConnection
-from commons.SongRecommender import recommend_beats
+from commons.song_recommender import recommend_beats
 
 db_conn = DatabaseConnection(DATABASE_URL, DATABASE_NAME, DATABASE_COLLECTION, DATABASE_KEY)
 

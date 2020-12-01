@@ -9,7 +9,7 @@ import azure.functions as func
 import requests
 import time
 
-from commons.SongRecommender import recommend_beats
+from commons.song_recommender import recommend_beats
 
 async def main(req: func.HttpRequest) -> func.HttpResponse:
     req_body = req.get_json()
