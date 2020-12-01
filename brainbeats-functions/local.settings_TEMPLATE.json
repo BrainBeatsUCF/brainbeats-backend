@@ -1,0 +1,14 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "DefaultEndpointsProtocol=https;AccountName=brainbeatsstorage;AccountKey=uPaZkpU/01ddwJrzhnQm+5FEMO3Uiyrx+GHI6QImk8rdDPGBLiEEaAZTCHBigB8uZJvq29SxMNCF+GRhnMuzsQ==;EndpointSuffix=core.windows.net",
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "database_url": "wss://brain-beats-database.gremlin.cosmos.azure.com:443/",
+    "database_name": "brain-beats-db",
+    "database_collection": "brain-beats-graph",
+    "database_key": "YOUR_PRIMARY_KEY",
+    "likes_limit": 10,
+    "KNN_K": 10,
+    "storage_connection_string": "YOUR_CONN_STRING"
+  }
+}

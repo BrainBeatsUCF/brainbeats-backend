@@ -73,6 +73,24 @@ Deploy the registered Azure Container as an Azure (Web) App Service. The Microso
 If you are redeploying an updated image to an existing App Service, please hit the "restart" button on the App Service portal. Sometimes Azure App Services can be buggy and it won't detect an updated image during redeployment even if continuous deployment is toggled.
 
 ## BrainBeats Azure Functions
+BrainBeats Azure Functions works completely independantly from the C# backend and only extends functionality, rather than replace. The Azure Functions' goal is to provide a platform for *automated* tasks. The following two tasks are run at 9:30 AM daily.
+- Automated Song Recommenders
+- Automated Storage Cleaners
+
 ### Song Recommendations
+The BrainBeats Song Recommender is a custom K Nearest Neighbors ML algorithm. The math for calculating distances for KNN can be found in the BrainBeats design documentation. For debugging generating recommendations for single users, a manual API endpoint is exposed. For production purposes, only the automated task should be run.
+
 ### Storage Cleaner
+The BrainBeats Storage Cleaner analyzes Beat attributes in the database and gets a list of referenced Sample Ids. Sample Ids not being used by any Beat or Sample has the corresponding audio file deleted from the Azure Storage account to prevent clutter. For debugging deleting Sample files, a manual API endpoint is exposed. For production purposes, only the automated task should be run.
+
 ### How to Run
+The BrainBeats Azure Functions is built with Microsoft Visual Studio Code. Using the Visual Studio Text Editor (not IDE) is strongly suggested for all testing and development.
+
+### Configuration Keys
+In order to debug functions locally, please rename `local.settings_TEMPLATE.json` to `local.settings.json` in the brainbeats-functions folder, and replace the placeholder database YOUR_PRIMARY_KEY and storage YOUR_CONN_STRING with the required values. See `Helpful Hints` to learn more about formatting.
+
+To run functions in a deployed environment, please see the `Configuration Keys` section above to populate the Function App Configuration page.
+
+To debug functions locally, follow the documentation `https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local?tabs=windows%2Ccsharp%2Cbash` to install the Azure Functions Core Tools.
+
+To deploy functions to Azure, follow the deployment documentation / quickstart `https://docs.microsoft.com/en-us/azure/azure-functions/create-first-function-vs-code-csharp`.
